@@ -1,0 +1,24 @@
+# Secrets and Environment Files
+.env
+.env.*
+!.env.example
+
+# Generated Configuration Files
+homelab/mas/config.yaml
+homelab/matrix/synapse/homeserver.yaml.backup.*
+
+# Database Data
+homelab/mas/db_data/
+homelab/matrix/matrix_postgres_data/
+
+# Backup Files
+*.backup
+*.bak
+*.tmp
+
+# Logs
+*.log
+logs/
+
+# Docker volumes
+docker-volumes/

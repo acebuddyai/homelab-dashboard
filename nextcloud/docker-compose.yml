@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  nextcloud-db:
+    image: postgres:15-alpine
+    container_name: nextcloud-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: qW8eR5tY2uI9oP6aS3dF7gH1jK4lZ9xC
+    volumes:
+      - nextcloud_db:/var/lib/postgresql/data
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.50
+
+  nextcloud:
+    image: nextcloud:latest
+    container_name: nextcloud
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: nextcloud-db
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: qW8eR5tY2uI9oP6aS3dF7gH1jK4lZ9xC
+      NEXTCLOUD_TRUSTED_DOMAINS: files.acebuddy.quest
+      OVERWRITEPROTOCOL: https
+    volumes:
+      - nextcloud_data:/var/www/html
+    depends_on:
+      - nextcloud-db
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.51
+
+volumes:
+  nextcloud_db:
+  nextcloud_data:
+
+networks:
+  homelab:
+    external: true

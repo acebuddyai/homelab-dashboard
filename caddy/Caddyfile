@@ -1,0 +1,54 @@
+{
+    email acebuddyai@gmail.com
+}
+
+# Root domain with Matrix well-known endpoints (FIXED ORDER)
+acebuddy.quest {
+    # Well-known endpoints MUST come first and be most specific
+    handle /.well-known/matrix/server {
+        respond `{"m.server": "matrix.acebuddy.quest:443"}` 200
+        header Content-Type application/json
+    }
+
+    handle /.well-known/matrix/client {
+        respond `{
+            "m.homeserver": {"base_url": "https://matrix.acebuddy.quest"}
+        }` 200
+        header Content-Type application/json
+    }
+    handle /health {
+        respond "Homelab OK" 200
+    }
+
+    # Redirect everything else to Cinny (MUST be last)
+    handle {
+        redir https://cinny.acebuddy.quest{uri}
+    }
+}
+
+# Matrix Synapse
+matrix.acebuddy.quest {
+    reverse_proxy /_matrix/* matrix-synapse:8008
+    reverse_proxy /_synapse/client/* matrix-synapse:8008
+    reverse_proxy /health matrix-synapse:8008
+}
+
+# Cinny Web Client
+cinny.acebuddy.quest {
+    reverse_proxy matrix-cinny:80
+}
+
+# AI Services
+ai.acebuddy.quest {
+    reverse_proxy open-webui:8080
+}
+
+# Task Management
+tasks.acebuddy.quest {
+    reverse_proxy vikunja:3456
+}
+
+# File Storage
+files.acebuddy.quest {
+    reverse_proxy nextcloud:80
+}

@@ -1,0 +1,29 @@
+version: '3.8'
+
+networks:
+  homelab:
+    name: homelab
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+services:
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.10
+
+volumes:
+  caddy_data:
+  caddy_config:
