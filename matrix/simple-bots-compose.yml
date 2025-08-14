@@ -1,0 +1,56 @@
+services:
+  # Simple Orchestrator bot - responds to "das"
+  simple-orchestrator:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile.simple-orchestrator
+    container_name: simple-orchestrator
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      MATRIX_HOMESERVER_URL: https://acebuddy.quest
+      MATRIX_BOT_USERNAME: "@unmolded8581:acebuddy.quest"
+      MATRIX_BOT_PASSWORD: "evacuate-gambling2-penniless"
+      BOT_STORE_DIR: /app/store
+    volumes:
+      - simple_orchestrator_store:/app/store
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.52
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Simple LLM bot - responds when called
+  simple-llm:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile.simple-llm
+    container_name: simple-llm
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      MATRIX_HOMESERVER_URL: https://acebuddy.quest
+      MATRIX_BOT_USERNAME: "@subatomic6140:acebuddy.quest"
+      MATRIX_BOT_PASSWORD: "entourage8-shuffling-poncho"
+      BOT_STORE_DIR: /app/store
+    volumes:
+      - simple_llm_store:/app/store
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.53
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  simple_orchestrator_store:
+  simple_llm_store:
+
+networks:
+  homelab:
+    external: true

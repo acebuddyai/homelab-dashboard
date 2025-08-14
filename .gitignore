@@ -7,6 +7,19 @@
 homelab/mas/config.yaml
 homelab/matrix/synapse/homeserver.yaml.backup.*
 
+# Matrix Sensitive Data
+matrix/synapse/
+matrix/searxng/
+matrix/bot/store/
+matrix/bot/.env
+
+# Python Cache Files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
 # Database Data
 homelab/mas/db_data/
 homelab/matrix/matrix_postgres_data/

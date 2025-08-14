@@ -1,0 +1,52 @@
+========================================
+QUICK START - TALKING TO GRANDPA LLM BOT
+========================================
+
+WHO TO TALK TO:
+- The bot is @subatomic6140 (shows as "👴 Grandpa LLM")
+- It responds to EVERYONE in the room
+- You're @headscarf4716
+
+EASIEST WAYS TO START:
+Just type any of these:
+- Hello
+- Hi
+- Hey there
+- Can you help me?
+- I have a question
+
+EXAMPLES OF THINGS TO SAY:
+- Tell me a joke
+- Tell me a story
+- What's the weather like?
+- Explain quantum physics
+- Help me write an email
+- What do you think about AI?
+- Can you write some code?
+- Translate "hello" to Spanish
+
+SPECIAL COMMANDS:
+- !help (shows all commands)
+- !joke (tells a joke)
+- !story (tells a story)
+
+DIRECT MENTION (always works):
+- @subatomic6140 hello
+- @subatomic6140 tell me a joke
+
+TIPS:
+✓ Just talk naturally - no special format needed
+✓ The bot has an elderly personality (that's intentional!)
+✓ It will respond to any message in the room
+✓ If no response, try "@subatomic6140 hello"
+
+TEST IT NOW:
+Type this → "Hello Grandpa"
+Or this → "Tell me a joke"
+
+The bot will respond with a 👴 emoji in its messages.
+
+========================================
+REMEMBER: Just type normally like you're texting!
+No need for special commands or formats.
+========================================

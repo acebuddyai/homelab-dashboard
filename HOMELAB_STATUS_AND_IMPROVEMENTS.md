@@ -141,7 +141,7 @@ QR code login (MSC4108) requires Matrix Authentication Service (MAS) with OIDC s
        issuer: https://auth.acebuddy.quest/
        client_id: "0000000000000000000SYNAPSE"
        client_auth_method: client_secret_basic
-       client_secret: "your-synapse-client-secret"
+       client_secret: "${SYNAPSE_CLIENT_SECRET}"
      msc4108_enabled: true
    ```
 

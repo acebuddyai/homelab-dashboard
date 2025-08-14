@@ -1,0 +1,257 @@
+version: '3.8'
+
+services:
+  # Coordination room creator and manager
+  matrix-coordinator:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile.coordinator
+    container_name: matrix-coordinator
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      MATRIX_HOMESERVER_URL: http://matrix-synapse:8008
+      MATRIX_BOT_USERNAME: "@coordinator:${MATRIX_DOMAIN}"
+      MATRIX_BOT_PASSWORD: "${COORDINATOR_PASSWORD}"
+      COORDINATION_ROOM_ID: "${COORDINATION_ROOM_ID}"
+      BOT_STORE_DIR: /app/store
+    volumes:
+      - coordinator_store:/app/store
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.25
+    depends_on:
+      - matrix-synapse
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Orchestrator agent - central coordinator
+  matrix-orchestrator:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile.orchestrator
+    container_name: matrix-orchestrator
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      MATRIX_HOMESERVER_URL: http://matrix-synapse:8008
+      MATRIX_BOT_USERNAME: "@orchestrator:${MATRIX_DOMAIN}"
+      MATRIX_BOT_PASSWORD: "${ORCHESTRATOR_PASSWORD}"
+      COORDINATION_ROOM_ID: "${COORDINATION_ROOM_ID}"
+      BOT_STORE_DIR: /app/store
+      AGENT_DISCOVERY_ENABLED: "true"
+      WORKFLOW_TIMEOUT: "300"
+    volumes:
+      - orchestrator_store:/app/store
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.26
+    depends_on:
+      - matrix-synapse
+      - matrix-coordinator
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # LLM agent - integrates with existing Ollama
+  matrix-llm-agent:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile.llm
+    container_name: matrix-llm-agent
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      MATRIX_HOMESERVER_URL: http://matrix-synapse:8008
+      MATRIX_BOT_USERNAME: "@llm:${MATRIX_DOMAIN}"
+      MATRIX_BOT_PASSWORD: "${LLM_AGENT_PASSWORD}"
+      COORDINATION_ROOM_ID: "${COORDINATION_ROOM_ID}"
+      BOT_STORE_DIR: /app/store
+      OLLAMA_URL: http://ollama:11434
+      DEFAULT_LLM_MODEL: "${DEFAULT_LLM_MODEL:-llama3.2:latest}"
+      LLM_MAX_TOKENS: "${LLM_MAX_TOKENS:-2048}"
+      LLM_TEMPERATURE: "${LLM_TEMPERATURE:-0.7}"
+    volumes:
+      - llm_agent_store:/app/store
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.27
+    depends_on:
+      - matrix-synapse
+      - matrix-orchestrator
+      - ollama
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8002/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Search agent - web search capabilities
+  matrix-search-agent:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile.search
+    container_name: matrix-search-agent
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      MATRIX_HOMESERVER_URL: http://matrix-synapse:8008
+      MATRIX_BOT_USERNAME: "@search:${MATRIX_DOMAIN}"
+      MATRIX_BOT_PASSWORD: "${SEARCH_AGENT_PASSWORD}"
+      COORDINATION_ROOM_ID: "${COORDINATION_ROOM_ID}"
+      BOT_STORE_DIR: /app/store
+      SEARXNG_URL: http://searxng:8080
+      SEARCH_RESULTS_LIMIT: "${SEARCH_RESULTS_LIMIT:-5}"
+    volumes:
+      - search_agent_store:/app/store
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.28
+    depends_on:
+      - matrix-synapse
+      - matrix-orchestrator
+      - searxng
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8003/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # RAG agent - vector database and knowledge management
+  matrix-rag-agent:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile.rag
+    container_name: matrix-rag-agent
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      MATRIX_HOMESERVER_URL: http://matrix-synapse:8008
+      MATRIX_BOT_USERNAME: "@rag:${MATRIX_DOMAIN}"
+      MATRIX_BOT_PASSWORD: "${RAG_AGENT_PASSWORD}"
+      COORDINATION_ROOM_ID: "${COORDINATION_ROOM_ID}"
+      BOT_STORE_DIR: /app/store
+      QDRANT_URL: http://qdrant:6333
+      EMBEDDING_MODEL: "${EMBEDDING_MODEL:-all-MiniLM-L6-v2}"
+      COLLECTION_NAME: "${QDRANT_COLLECTION:-homelab_knowledge}"
+    volumes:
+      - rag_agent_store:/app/store
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.29
+    depends_on:
+      - matrix-synapse
+      - matrix-orchestrator
+      - qdrant
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8004/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # SearXNG for web search
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    restart: unless-stopped
+    environment:
+      BASE_URL: "http://searxng:8080"
+      INSTANCE_NAME: "Homelab Search"
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.35
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
+
+  # Qdrant vector database for RAG
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    restart: unless-stopped
+    environment:
+      QDRANT__SERVICE__HTTP_PORT: 6333
+      QDRANT__SERVICE__GRPC_PORT: 6334
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.36
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis for agent coordination and caching
+  redis:
+    image: redis:7-alpine
+    container_name: matrix-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.37
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Agent monitoring dashboard (optional)
+  matrix-monitor:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile.monitor
+    container_name: matrix-monitor
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      MATRIX_HOMESERVER_URL: http://matrix-synapse:8008
+      COORDINATION_ROOM_ID: "${COORDINATION_ROOM_ID}"
+      REDIS_URL: redis://redis:6379/0
+      MONITOR_INTERVAL: "${MONITOR_INTERVAL:-30}"
+    volumes:
+      - monitor_store:/app/store
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.38
+    depends_on:
+      - redis
+      - matrix-orchestrator
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8005/health')"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  coordinator_store:
+  orchestrator_store:
+  llm_agent_store:
+  search_agent_store:
+  rag_agent_store:
+  monitor_store:
+  qdrant_storage:
+  redis_data:
+
+networks:
+  homelab:
+    external: true
