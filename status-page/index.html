@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Acebuddy Homelab Status</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                padding: 20px;
+            }
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background: rgba(255, 255, 255, 0.95);
+                border-radius: 15px;
+                padding: 30px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            }
+
+            .header {
+                text-align: center;
+                margin-bottom: 40px;
+                border-bottom: 2px solid #eee;
+                padding-bottom: 20px;
+            }
+
+            .header h1 {
+                color: #333;
+                margin-bottom: 10px;
+                font-size: 2.5em;
+            }
+
+            .header p {
+                color: #666;
+                font-size: 1.2em;
+            }
+
+            .status-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+                gap: 25px;
+                margin-bottom: 40px;
+            }
+
+            .service-card {
+                background: white;
+                border-radius: 12px;
+                padding: 25px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                border-left: 5px solid #4caf50;
+                transition:
+                    transform 0.3s ease,
+                    box-shadow 0.3s ease;
+            }
+
+            .service-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            }
+
+            .service-card.maintenance {
+                border-left-color: #ff9800;
+            }
+
+            .service-card.offline {
+                border-left-color: #f44336;
+            }
+
+            .service-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+            }
+
+            .service-name {
+                font-size: 1.3em;
+                font-weight: bold;
+                color: #333;
+            }
+
+            .status-indicator {
+                padding: 5px 12px;
+                border-radius: 20px;
+                font-size: 0.8em;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+
+            .status-online {
+                background: #4caf50;
+                color: white;
+            }
+
+            .status-maintenance {
+                background: #ff9800;
+                color: white;
+            }
+
+            .status-offline {
+                background: #f44336;
+                color: white;
+            }
+
+            .service-description {
+                color: #666;
+                margin-bottom: 15px;
+                line-height: 1.5;
+            }
+
+            .service-links {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .service-link {
+                display: inline-block;
+                padding: 8px 16px;
+                background: #007bff;
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+                font-size: 0.9em;
+                transition: background 0.3s ease;
+            }
+
+            .service-link:hover {
+                background: #0056b3;
+            }
+
+            .service-link.admin {
+                background: #6f42c1;
+            }
+
+            .service-link.admin:hover {
+                background: #5a2d91;
+            }
+
+            .service-info {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-top: 15px;
+                padding-top: 15px;
+                border-top: 1px solid #eee;
+                font-size: 0.9em;
+            }
+
+            .info-item {
+                display: flex;
+                justify-content: space-between;
+            }
+
+            .info-label {
+                color: #666;
+                font-weight: 500;
+            }
+
+            .info-value {
+                color: #333;
+                font-family: monospace;
+            }
+
+            .network-info {
+                background: #f8f9fa;
+                border-radius: 8px;
+                padding: 20px;
+                margin-top: 30px;
+            }
+
+            .network-info h3 {
+                color: #333;
+                margin-bottom: 15px;
+            }
+
+            .network-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+            }
+
+            .last-updated {
+                text-align: center;
+                color: #666;
+                font-style: italic;
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 1px solid #eee;
+            }
+
+            .refresh-btn {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #007bff;
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 60px;
+                height: 60px;
+                font-size: 20px;
+                cursor: pointer;
+                box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+                transition: all 0.3s ease;
+            }
+
+            .refresh-btn:hover {
+                background: #0056b3;
+                transform: scale(1.1);
+            }
+
+            @media (max-width: 768px) {
+                .container {
+                    margin: 10px;
+                    padding: 20px;
+                }
+
+                .status-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .service-info {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🏠 Acebuddy Homelab</h1>
+                <p>Service Status Dashboard</p>
+            </div>
+
+            <div class="status-grid">
+                <!-- Matrix Chat Server -->
+                <div class="service-card">
+                    <div class="service-header">
+                        <div class="service-name">💬 Matrix Chat Server</div>
+                        <div class="status-indicator status-online">Online</div>
+                    </div>
+                    <div class="service-description">
+                        Self-hosted Matrix homeserver with email password reset,
+                        end-to-end encryption, and federation support.
+                    </div>
+                    <div class="service-links">
+                        <a
+                            href="https://cinny.acebuddy.quest"
+                            class="service-link"
+                            >Cinny Web Client</a
+                        >
+                        <a
+                            href="https://matrix.acebuddy.quest"
+                            class="service-link"
+                            >Server API</a
+                        >
+                    </div>
+                    <div class="service-info">
+                        <div class="info-item">
+                            <span class="info-label">Server:</span>
+                            <span class="info-value"
+                                >matrix.acebuddy.quest</span
+                            >
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Container IP:</span>
+                            <span class="info-value">172.20.0.21</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Internal Port:</span>
+                            <span class="info-value">8008</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Database:</span>
+                            <span class="info-value">PostgreSQL</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Email Reset:</span>
+                            <span class="info-value" style="color: #4caf50"
+                                >✅ Working</span
+                            >
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">SMTP:</span>
+                            <span class="info-value">Gmail</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Services -->
+                <div class="service-card">
+                    <div class="service-header">
+                        <div class="service-name">🤖 AI Services</div>
+                        <div class="status-indicator status-online">Online</div>
+                    </div>
+                    <div class="service-description">
+                        Local AI chat interface powered by Ollama for private,
+                        secure AI interactions.
+                    </div>
+                    <div class="service-links">
+                        <a href="https://ai.acebuddy.quest" class="service-link"
+                            >Open WebUI</a
+                        >
+                    </div>
+                    <div class="service-info">
+                        <div class="info-item">
+                            <span class="info-label">Frontend:</span>
+                            <span class="info-value">Open WebUI</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Backend:</span>
+                            <span class="info-value">Ollama</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">WebUI IP:</span>
+                            <span class="info-value">172.20.0.31</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Ollama IP:</span>
+                            <span class="info-value">172.20.0.30</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Storage -->
+                <div class="service-card">
+                    <div class="service-header">
+                        <div class="service-name">📁 File Storage</div>
+                        <div class="status-indicator status-online">Online</div>
+                    </div>
+                    <div class="service-description">
+                        NextCloud instance for file storage, sharing, and
+                        collaboration with calendar and contacts.
+                    </div>
+                    <div class="service-links">
+                        <a
+                            href="https://files.acebuddy.quest"
+                            class="service-link"
+                            >NextCloud</a
+                        >
+                    </div>
+                    <div class="service-info">
+                        <div class="info-item">
+                            <span class="info-label">Server:</span>
+                            <span class="info-value">files.acebuddy.quest</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Container IP:</span>
+                            <span class="info-value">172.20.0.51</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Database IP:</span>
+                            <span class="info-value">172.20.0.50</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Database:</span>
+                            <span class="info-value">PostgreSQL</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task Management -->
+                <div class="service-card">
+                    <div class="service-header">
+                        <div class="service-name">✅ Task Management</div>
+                        <div class="status-indicator status-online">Online</div>
+                    </div>
+                    <div class="service-description">
+                        Vikunja task management for organizing projects, todos,
+                        and team collaboration.
+                    </div>
+                    <div class="service-links">
+                        <a
+                            href="https://tasks.acebuddy.quest"
+                            class="service-link"
+                            >Vikunja</a
+                        >
+                    </div>
+                    <div class="service-info">
+                        <div class="info-item">
+                            <span class="info-label">Server:</span>
+                            <span class="info-value">tasks.acebuddy.quest</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Container IP:</span>
+                            <span class="info-value">172.20.0.40</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Database:</span>
+                            <span class="info-value">SQLite</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Internal Port:</span>
+                            <span class="info-value">3456</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reverse Proxy -->
+                <div class="service-card">
+                    <div class="service-header">
+                        <div class="service-name">🌐 Reverse Proxy</div>
+                        <div class="status-indicator status-online">Online</div>
+                    </div>
+                    <div class="service-description">
+                        Caddy reverse proxy handling SSL termination, routing,
+                        and automatic HTTPS certificates.
+                    </div>
+                    <div class="service-links">
+                        <a
+                            href="https://acebuddy.quest/health"
+                            class="service-link"
+                            >Health Check</a
+                        >
+                    </div>
+                    <div class="service-info">
+                        <div class="info-item">
+                            <span class="info-label">HTTP Port:</span>
+                            <span class="info-value">80</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">HTTPS Port:</span>
+                            <span class="info-value">443</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Container IP:</span>
+                            <span class="info-value">172.20.0.10</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">SSL Provider:</span>
+                            <span class="info-value">Let's Encrypt</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Matrix Bot -->
+                <div class="service-card">
+                    <div class="service-header">
+                        <div class="service-name">🤖 Matrix Bot</div>
+                        <div class="status-indicator status-online">Online</div>
+                    </div>
+                    <div class="service-description">
+                        Custom Matrix bot for automation and enhanced
+                        functionality within your Matrix rooms.
+                    </div>
+                    <div class="service-links">
+                        <span style="color: #666; font-style: italic"
+                            >Internal Service</span
+                        >
+                    </div>
+                    <div class="service-info">
+                        <div class="info-item">
+                            <span class="info-label">Container IP:</span>
+                            <span class="info-value">172.20.0.23</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Type:</span>
+                            <span class="info-value">Custom Python Bot</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value">Running</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Runtime:</span>
+                            <span class="info-value">5 hours</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Matrix Auth Service (Available) -->
+                <div class="service-card maintenance">
+                    <div class="service-header">
+                        <div class="service-name">🔐 Matrix Auth Service</div>
+                        <div class="status-indicator status-maintenance">
+                            Available
+                        </div>
+                    </div>
+                    <div class="service-description">
+                        Matrix Authentication Service (MAS) for QR code login
+                        and advanced auth. Ready to enable for enhanced
+                        features.
+                    </div>
+                    <div class="service-links">
+                        <span style="color: #666; font-style: italic"
+                            >Run: ./enable-qr-login.sh</span
+                        >
+                    </div>
+                    <div class="service-info">
+                        <div class="info-item">
+                            <span class="info-label">Location:</span>
+                            <span class="info-value">mas.disabled/</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">QR Login:</span>
+                            <span class="info-value">Ready to Enable</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Current Auth:</span>
+                            <span class="info-value">Basic + Email</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Email Reset:</span>
+                            <span class="info-value" style="color: #4caf50"
+                                >✅ Working</span
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="network-info">
+                <h3>🌐 Network Information</h3>
+                <div class="network-grid">
+                    <div class="info-item">
+                        <span class="info-label">Network Name:</span>
+                        <span class="info-value">homelab</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Subnet:</span>
+                        <span class="info-value">172.20.0.0/16</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Bridge Driver:</span>
+                        <span class="info-value">bridge</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">External Ports:</span>
+                        <span class="info-value">80, 443 (HTTP/S)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="network-info">
+                <h3>🔍 Quick Actions</h3>
+                <div
+                    style="
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 15px;
+                        margin-top: 15px;
+                    "
+                >
+                    <button
+                        onclick="checkAllServices()"
+                        class="service-link"
+                        style="border: none; cursor: pointer"
+                    >
+                        🔄 Check All Services
+                    </button>
+                    <button
+                        onclick="viewLogs()"
+                        class="service-link admin"
+                        style="border: none; cursor: pointer"
+                    >
+                        📋 View Recent Logs
+                    </button>
+                    <button
+                        onclick="showSystemInfo()"
+                        class="service-link"
+                        style="border: none; cursor: pointer"
+                    >
+                        ℹ️ System Info
+                    </button>
+                    <button
+                        onclick="testEmail()"
+                        class="service-link"
+                        style="
+                            border: none;
+                            cursor: pointer;
+                            background: #28a745;
+                        "
+                    >
+                        📧 Test Email
+                    </button>
+                </div>
+            </div>
+
+            <div class="last-updated">
+                Last updated: <span id="lastUpdated"></span>
+            </div>
+        </div>
+
+        <button
+            class="refresh-btn"
+            onclick="location.reload()"
+            title="Refresh Status"
+        >
+            🔄
+        </button>
+
+        <script>
+            // Set last updated time
+            document.getElementById("lastUpdated").textContent =
+                new Date().toLocaleString();
+
+            // Auto-refresh every 5 minutes
+            setInterval(() => {
+                location.reload();
+            }, 300000);
+
+            // Service health checking functions
+            async function checkServiceHealth(url, timeout = 5000) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(
+                        () => controller.abort(),
+                        timeout,
+                    );
+
+                    const response = await fetch(url, {
+                        method: "HEAD",
+                        signal: controller.signal,
+                        mode: "no-cors",
+                    });
+
+                    clearTimeout(timeoutId);
+                    return true;
+                } catch (error) {
+                    return false;
+                }
+            }
+
+            async function checkAllServices() {
+                const services = [
+                    {
+                        name: "Matrix Server",
+                        url: "https://matrix.acebuddy.quest/_matrix/client/versions",
+                    },
+                    {
+                        name: "Cinny Client",
+                        url: "https://cinny.acebuddy.quest",
+                    },
+                    { name: "AI Services", url: "https://ai.acebuddy.quest" },
+                    { name: "NextCloud", url: "https://files.acebuddy.quest" },
+                    { name: "Vikunja", url: "https://tasks.acebuddy.quest" },
+                ];
+
+                console.log("🔍 Checking service health...");
+
+                for (const service of services) {
+                    const isHealthy = await checkServiceHealth(service.url);
+                    console.log(
+                        `${service.name}: ${isHealthy ? "✅ Online" : "❌ Offline"}`,
+                    );
+                }
+            }
+
+            function viewLogs() {
+                alert(
+                    "To view logs, use:\n\n" +
+                        "docker logs -f matrix-synapse\n" +
+                        "docker logs -f matrix-bot\n" +
+                        "docker logs -f caddy\n" +
+                        "docker logs -f nextcloud\n" +
+                        "docker logs -f open-webui",
+                );
+            }
+
+            function showSystemInfo() {
+                const info = `
+🏠 Acebuddy Homelab System Information
+
+🌐 Services:
+• Matrix Chat: https://cinny.acebuddy.quest
+• AI Interface: https://ai.acebuddy.quest
+• File Storage: https://files.acebuddy.quest
+• Task Manager: https://tasks.acebuddy.quest
+• Status Dashboard: https://status.acebuddy.quest
+
+🔧 Infrastructure:
+• Reverse Proxy: Caddy (SSL termination)
+• Network: Docker bridge (172.20.0.0/16)
+• Databases: PostgreSQL for Matrix & NextCloud
+• Storage: Docker volumes for persistence
+
+✅ Recent Fixes:
+• Matrix email password reset: ✅ WORKING
+• Gmail SMTP integration: ✅ CONFIGURED
+• Email verification: ✅ ENABLED
+• Status dashboard: ✅ DEPLOYED
+
+🔄 Available Upgrades:
+• QR code login (run: ./enable-qr-login.sh)
+• Matrix Authentication Service (MAS)
+• Advanced device verification
+
+📊 Container Count: 12 active containers
+💾 Storage: Persistent volumes for all services
+🔒 Security: HTTPS everywhere via Let's Encrypt
+📧 Email: Gmail SMTP working for password resets
+            `;
+                alert(info);
+            }
+
+            function testEmail() {
+                const email = prompt(
+                    "Enter email address to test Matrix email functionality:",
+                );
+                if (email) {
+                    alert(
+                        `To test email functionality:\n\n1. SSH to your server\n2. Run: cd homelab/matrix\n3. Run: python3 test-email.py --email ${email}\n\nOr test password reset directly at:\nhttps://cinny.acebuddy.quest`,
+                    );
+                }
+            }
+
+            // Add visual indicators for service health
+            document.addEventListener("DOMContentLoaded", function () {
+                // You could add real-time health checks here
+                console.log("🏠 Homelab Status Dashboard Loaded");
+                console.log(
+                    "📊 Services: Matrix, AI, NextCloud, Vikunja, Caddy",
+                );
+                console.log(
+                    "🔍 Use browser console for detailed service checks",
+                );
+            });
+        </script>
+    </body>
+</html>

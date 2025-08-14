@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  status-page:
+    image: nginx:alpine
+    container_name: homelab-status
+    restart: unless-stopped
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.60
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  homelab:
+    external: true
