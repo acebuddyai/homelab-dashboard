@@ -82,8 +82,8 @@ experimental_features:
     issuer: https://auth.acebuddy.quest/
     client_id: "0000000000000000000SYNAPSE"
     client_auth_method: client_secret_basic
-    client_secret: "322cf1d6624bea636c2c9c75c32c9a1c274ad839fb7a8e5c5b50cd0f18736685e54c13b9b79f1b8dd5cf1a0922238e3a"
-    admin_token: "cf6ca249b0e38bc767e5d03bc84af51731acb0430cb390db34e5b2a09249f004c4131ac97e6ece7bba1f348739ed6557"
+    client_secret: "${SYNAPSE_CLIENT_SECRET}"
+    admin_token: "${MAS_ADMIN_TOKEN}"
     account_management_url: https://auth.acebuddy.quest/account/
 
   # MSC4108: QR Code Login

@@ -98,9 +98,9 @@ media_store_path: /data/media_store
 report_stats: false
 
 # Generate these secrets - they should be random strings
-registration_shared_secret: "mX9kL2pQ8vR5nE7wF3gH9jK6mN4bV1cZ8yU1oP4qW7rT5nM2sL9vB3xC6zA8fG1h"
-macaroon_secret_key: "nM4bV1cZ8yU1oP4qW7rT5nM2sL9vB3xC6zA8fG1hmX9kL2pQ8vR5nE7wF3gH9jK6"
-form_secret: "sL9vB3xC6zA8fG1hmX9kL2pQ8vR5nE7wF3gH9jK6mN4bV1cZ8yU1oP4qW7rT5nM2"
+registration_shared_secret: "${SYNAPSE_REGISTRATION_SECRET}"
+macaroon_secret_key: "${SYNAPSE_MACAROON_SECRET}"
+form_secret: "${SYNAPSE_FORM_SECRET}"
 signing_key_path: "/data/acebuddy.quest.signing.key"
 
 trusted_key_servers:

@@ -1,14 +1,15 @@
-version: '3.8'
+version: "3.8"
 
 services:
   nextcloud-db:
     image: postgres:15-alpine
     container_name: nextcloud-db
     restart: unless-stopped
+    env_file: ../.env
     environment:
       POSTGRES_DB: nextcloud
       POSTGRES_USER: nextcloud
-      POSTGRES_PASSWORD: qW8eR5tY2uI9oP6aS3dF7gH1jK4lZ9xC
+      POSTGRES_PASSWORD: ${NEXTCLOUD_DB_PASSWORD}
     volumes:
       - nextcloud_db:/var/lib/postgresql/data
     networks:
@@ -19,11 +20,12 @@ services:
     image: nextcloud:latest
     container_name: nextcloud
     restart: unless-stopped
+    env_file: ../.env
     environment:
       POSTGRES_HOST: nextcloud-db
       POSTGRES_DB: nextcloud
       POSTGRES_USER: nextcloud
-      POSTGRES_PASSWORD: qW8eR5tY2uI9oP6aS3dF7gH1jK4lZ9xC
+      POSTGRES_PASSWORD: ${NEXTCLOUD_DB_PASSWORD}
       NEXTCLOUD_TRUSTED_DOMAINS: files.acebuddy.quest
       OVERWRITEPROTOCOL: https
     volumes:

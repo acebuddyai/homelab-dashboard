@@ -67,7 +67,3 @@ status.acebuddy.quest {
     reverse_proxy homelab-status:80
 }
 
-# Matrix Authentication Service
-auth.acebuddy.quest {
-    reverse_proxy matrix-auth-service:8080
-}

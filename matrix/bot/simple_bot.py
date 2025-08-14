@@ -18,11 +18,15 @@ logger = logging.getLogger(__name__)
 
 class SimpleMatrixBot:
     def __init__(self):
-        # Configuration
-        self.homeserver_url = "https://matrix.acebuddy.quest"
-        self.username = "@subatomic6140:acebuddy.quest"
-        self.password = "entourage8-shuffling-poncho"
-        self.target_room_id = "!SpcIthQfyfDNgsYnad:acebuddy.quest"
+        # Configuration from environment variables
+        self.homeserver_url = os.getenv("MATRIX_HOMESERVER_URL", "https://matrix.acebuddy.quest")
+        self.username = os.getenv("MATRIX_BOT_USERNAME")
+        self.password = os.getenv("MATRIX_BOT_PASSWORD")
+        self.target_room_id = os.getenv("MATRIX_TARGET_ROOM_ID")
+
+        # Validate required environment variables
+        if not all([self.username, self.password, self.target_room_id]):
+            raise ValueError("Missing required environment variables: MATRIX_BOT_USERNAME, MATRIX_BOT_PASSWORD, MATRIX_TARGET_ROOM_ID")
 
         # Create client without encryption store for simplicity
         self.client = AsyncClient(
