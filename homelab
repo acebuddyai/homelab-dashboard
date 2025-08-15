@@ -1,0 +1,511 @@
+#!/bin/bash
+
+# Homelab Management CLI
+# Central command for managing all homelab services
+# Usage: homelab [command] [options]
+
+set -e
+
+# Script configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VERSION="1.0.0"
+COMPOSE_FILE="${SCRIPT_DIR}/docker-compose-ai-stack.yml"
+INTEGRATED_COMPOSE="${SCRIPT_DIR}/docker-compose-integrated.yml"
+CALENDAR_COMPOSE="${SCRIPT_DIR}/docker-compose-calendar.yml"
+ENV_FILE="${SCRIPT_DIR}/.env"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+PURPLE='\033[0;35m'
+NC='\033[0m'
+BOLD='\033[1m'
+
+# Print colored output
+print_color() {
+    color=$1
+    shift
+    echo -e "${color}$@${NC}"
+}
+
+# Print usage information
+show_help() {
+    cat << EOF
+${BOLD}Homelab Management CLI v${VERSION}${NC}
+
+${BOLD}USAGE:${NC}
+    homelab [COMMAND] [OPTIONS]
+
+${BOLD}COMMANDS:${NC}
+    ${GREEN}start${NC}      Start all services
+    ${GREEN}stop${NC}       Stop all services
+    ${GREEN}restart${NC}    Restart all services
+    ${GREEN}status${NC}     Show service status
+    ${GREEN}logs${NC}       View service logs
+    ${GREEN}check${NC}      Run health checks
+    ${GREEN}setup${NC}      Run setup wizard
+    ${GREEN}backup${NC}     Backup data
+    ${GREEN}restore${NC}    Restore from backup
+    ${GREEN}update${NC}     Update services
+    ${GREEN}clean${NC}      Clean up resources
+    ${GREEN}ai${NC}         Manage AI models
+    ${GREEN}email${NC}      Manage email accounts
+    ${GREEN}calendar${NC}   Manage calendar users
+    ${GREEN}dashboard${NC}  Open dashboard in browser
+    ${GREEN}urls${NC}       Show all service URLs
+    ${GREEN}info${NC}       Show system information
+    ${GREEN}help${NC}       Show this help message
+
+${BOLD}EXAMPLES:${NC}
+    homelab start              # Start all services
+    homelab logs web-ui        # View logs for web-ui
+    homelab ai pull llama2     # Pull a new AI model
+    homelab email add user     # Add email user
+    homelab status --json      # Get status in JSON format
+
+${BOLD}OPTIONS:${NC}
+    -h, --help     Show help for a command
+    -v, --verbose  Verbose output
+    -q, --quiet    Quiet mode
+    --version      Show version
+
+For more information: https://github.com/acebuddyai/homelab-dashboard
+EOF
+}
+
+# Start services
+cmd_start() {
+    print_color $CYAN "Starting Homelab services..."
+
+    # Start main services
+    docker-compose -f "$COMPOSE_FILE" up -d
+
+    # Start calendar if exists
+    if [ -f "$CALENDAR_COMPOSE" ]; then
+        docker-compose -f "$CALENDAR_COMPOSE" up -d baikal
+    fi
+
+    print_color $GREEN "✓ Services started"
+    print_color $BLUE "View status: homelab status"
+}
+
+# Stop services
+cmd_stop() {
+    print_color $YELLOW "Stopping Homelab services..."
+
+    docker-compose -f "$COMPOSE_FILE" down
+
+    if [ -f "$CALENDAR_COMPOSE" ]; then
+        docker-compose -f "$CALENDAR_COMPOSE" down
+    fi
+
+    print_color $GREEN "✓ Services stopped"
+}
+
+# Restart services
+cmd_restart() {
+    cmd_stop
+    sleep 2
+    cmd_start
+}
+
+# Show status
+cmd_status() {
+    local json_output=false
+
+    if [[ "$1" == "--json" ]]; then
+        json_output=true
+    fi
+
+    if [ "$json_output" = true ]; then
+        # JSON output for automation
+        echo '{"services":['
+        docker ps --format '{"name":"{{.Names}}","status":"{{.Status}}","ports":"{{.Ports}}"},' | sed '$ s/,$//'
+        echo ']}'
+    else
+        print_color $CYAN "╔════════════════════════════════════════════╗"
+        printf "${CYAN}║${NC} ${BOLD}%-42s${NC} ${CYAN}║${NC}\n" "       HOMELAB SERVICE STATUS"
+        print_color $CYAN "╚════════════════════════════════════════════╝"
+        echo
+
+        # Check Docker containers
+        print_color $BLUE "Docker Containers:"
+        docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | head -20
+
+        echo
+        print_color $BLUE "Service Health:"
+
+        # Check key services
+        services=("web-ui:8080" "ollama:11434" "roundcube:8086" "baikal:5233")
+        for service in "${services[@]}"; do
+            IFS=':' read -r name port <<< "$service"
+            if curl -s -o /dev/null -w "%{http_code}" "http://localhost:${port}" | grep -qE "200|302"; then
+                print_color $GREEN "  ✓ ${name} (port ${port})"
+            else
+                print_color $RED "  ✗ ${name} (port ${port})"
+            fi
+        done
+    fi
+}
+
+# View logs
+cmd_logs() {
+    local service=$1
+    local lines=${2:-100}
+
+    if [ -z "$service" ]; then
+        print_color $YELLOW "Showing logs for all services (last ${lines} lines)..."
+        docker-compose -f "$COMPOSE_FILE" logs --tail="${lines}"
+    else
+        print_color $YELLOW "Showing logs for ${service} (last ${lines} lines)..."
+        docker logs --tail="${lines}" -f "$service"
+    fi
+}
+
+# Health check
+cmd_check() {
+    if [ -f "${SCRIPT_DIR}/check-services.sh" ]; then
+        "${SCRIPT_DIR}/check-services.sh"
+    else
+        print_color $RED "Health check script not found"
+    fi
+}
+
+# Setup wizard
+cmd_setup() {
+    if [ -f "${SCRIPT_DIR}/setup-wizard.sh" ]; then
+        "${SCRIPT_DIR}/setup-wizard.sh"
+    else
+        print_color $RED "Setup wizard not found"
+    fi
+}
+
+# Backup data
+cmd_backup() {
+    local backup_dir="${SCRIPT_DIR}/backups/$(date +%Y%m%d_%H%M%S)"
+
+    print_color $CYAN "Creating backup in ${backup_dir}..."
+    mkdir -p "$backup_dir"
+
+    # Backup configurations
+    cp -r "${SCRIPT_DIR}"/*.yml "$backup_dir/" 2>/dev/null || true
+    cp "${ENV_FILE}" "$backup_dir/" 2>/dev/null || true
+
+    # Backup data directories
+    for dir in email calendar baikal nextcloud; do
+        if [ -d "${SCRIPT_DIR}/${dir}" ]; then
+            print_color $BLUE "Backing up ${dir}..."
+            tar -czf "${backup_dir}/${dir}.tar.gz" -C "${SCRIPT_DIR}" "${dir}"
+        fi
+    done
+
+    # Backup Docker volumes
+    print_color $BLUE "Backing up Docker volumes..."
+    docker run --rm -v ollama_data:/data -v "${backup_dir}":/backup alpine tar -czf /backup/ollama_data.tar.gz -C /data .
+
+    print_color $GREEN "✓ Backup completed: ${backup_dir}"
+}
+
+# Restore from backup
+cmd_restore() {
+    local backup_path=$1
+
+    if [ -z "$backup_path" ]; then
+        print_color $YELLOW "Available backups:"
+        ls -la "${SCRIPT_DIR}/backups/" 2>/dev/null || echo "No backups found"
+        return
+    fi
+
+    if [ ! -d "$backup_path" ]; then
+        print_color $RED "Backup not found: ${backup_path}"
+        exit 1
+    fi
+
+    print_color $YELLOW "⚠ This will overwrite current configuration!"
+    read -p "Continue? (y/N): " confirm
+
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        print_color $BLUE "Restore cancelled"
+        return
+    fi
+
+    print_color $CYAN "Restoring from ${backup_path}..."
+
+    # Stop services first
+    cmd_stop
+
+    # Restore files
+    cp "${backup_path}"/*.yml "${SCRIPT_DIR}/" 2>/dev/null || true
+    cp "${backup_path}/.env" "${SCRIPT_DIR}/" 2>/dev/null || true
+
+    # Restore data directories
+    for archive in "${backup_path}"/*.tar.gz; do
+        if [ -f "$archive" ]; then
+            print_color $BLUE "Restoring $(basename "$archive")..."
+            tar -xzf "$archive" -C "${SCRIPT_DIR}/"
+        fi
+    done
+
+    print_color $GREEN "✓ Restore completed"
+    print_color $BLUE "Starting services..."
+    cmd_start
+}
+
+# Update services
+cmd_update() {
+    print_color $CYAN "Updating Homelab services..."
+
+    # Pull latest images
+    docker-compose -f "$COMPOSE_FILE" pull
+
+    # Rebuild custom images
+    docker-compose -f "$COMPOSE_FILE" build --no-cache
+
+    # Restart services
+    cmd_restart
+
+    print_color $GREEN "✓ Services updated"
+}
+
+# Clean up resources
+cmd_clean() {
+    print_color $YELLOW "Cleaning up Docker resources..."
+
+    # Remove stopped containers
+    docker container prune -f
+
+    # Remove unused images
+    docker image prune -f
+
+    # Remove unused volumes (careful!)
+    read -p "Remove unused volumes? (y/N): " confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        docker volume prune -f
+    fi
+
+    # Remove unused networks
+    docker network prune -f
+
+    print_color $GREEN "✓ Cleanup completed"
+}
+
+# AI model management
+cmd_ai() {
+    local action=$1
+    local model=$2
+
+    case "$action" in
+        list)
+            print_color $CYAN "Installed AI models:"
+            docker exec ollama ollama list 2>/dev/null || echo "Ollama not running"
+            ;;
+        pull)
+            if [ -z "$model" ]; then
+                print_color $RED "Please specify a model"
+                echo "Example: homelab ai pull llama2"
+                exit 1
+            fi
+            print_color $CYAN "Pulling model ${model}..."
+            docker exec ollama ollama pull "$model"
+            ;;
+        remove)
+            if [ -z "$model" ]; then
+                print_color $RED "Please specify a model"
+                exit 1
+            fi
+            print_color $YELLOW "Removing model ${model}..."
+            docker exec ollama ollama rm "$model"
+            ;;
+        *)
+            print_color $YELLOW "AI model management commands:"
+            echo "  homelab ai list           # List installed models"
+            echo "  homelab ai pull MODEL      # Pull a new model"
+            echo "  homelab ai remove MODEL    # Remove a model"
+            ;;
+    esac
+}
+
+# Email management
+cmd_email() {
+    if [ -f "${SCRIPT_DIR}/email/manage-users.sh" ]; then
+        "${SCRIPT_DIR}/email/manage-users.sh" "$@"
+    else
+        print_color $YELLOW "Email management not configured"
+        echo "Deploy email service first: homelab start"
+    fi
+}
+
+# Calendar management
+cmd_calendar() {
+    if [ -f "${SCRIPT_DIR}/calendar/manage-users.sh" ]; then
+        "${SCRIPT_DIR}/calendar/manage-users.sh" "$@"
+    else
+        print_color $YELLOW "Calendar management not configured"
+        echo "Deploy calendar service first: homelab start"
+    fi
+}
+
+# Open dashboard
+cmd_dashboard() {
+    local url="http://localhost:8080"
+
+    print_color $CYAN "Opening dashboard..."
+
+    # Try different commands to open browser
+    if command -v xdg-open >/dev/null 2>&1; then
+        xdg-open "$url"
+    elif command -v open >/dev/null 2>&1; then
+        open "$url"
+    elif command -v start >/dev/null 2>&1; then
+        start "$url"
+    else
+        print_color $YELLOW "Could not open browser automatically"
+        echo "Please visit: $url"
+    fi
+}
+
+# Show URLs
+cmd_urls() {
+    print_color $CYAN "╔════════════════════════════════════════════╗"
+    printf "${CYAN}║${NC} ${BOLD}%-42s${NC} ${CYAN}║${NC}\n" "        SERVICE ACCESS URLS"
+    print_color $CYAN "╚════════════════════════════════════════════╝"
+    echo
+
+    if [ -f "$ENV_FILE" ]; then
+        source "$ENV_FILE"
+    fi
+
+    DOMAIN=${DOMAIN:-localhost}
+
+    if [ "$DOMAIN" = "localhost" ]; then
+        print_color $BLUE "Local Access:"
+        echo "  Dashboard:    http://localhost:8080"
+        echo "  Webmail:      http://localhost:8086"
+        echo "  Calendar:     http://localhost:5233"
+        echo "  Nextcloud:    http://localhost:8082"
+        echo "  API:          http://localhost:3000"
+    else
+        print_color $BLUE "Public Access:"
+        echo "  Dashboard:    https://ai.${DOMAIN}"
+        echo "  Webmail:      https://mail.${DOMAIN}"
+        echo "  Calendar:     https://calendar.${DOMAIN}"
+        echo "  Nextcloud:    https://files.${DOMAIN}"
+        echo "  Chat:         https://chat.${DOMAIN}"
+        echo "  Workflows:    https://workflows.${DOMAIN}"
+        echo "  Tasks:        https://tasks.${DOMAIN}"
+        echo "  Search:       https://search.${DOMAIN}"
+        echo "  Status:       https://status.${DOMAIN}"
+    fi
+
+    echo
+    print_color $CYAN "Management:"
+    echo "  GitHub:       https://github.com/acebuddyai/homelab-dashboard"
+}
+
+# Show system information
+cmd_info() {
+    print_color $CYAN "╔════════════════════════════════════════════╗"
+    printf "${CYAN}║${NC} ${BOLD}%-42s${NC} ${CYAN}║${NC}\n" "       SYSTEM INFORMATION"
+    print_color $CYAN "╚════════════════════════════════════════════╝"
+    echo
+
+    print_color $BLUE "System:"
+    echo "  Hostname:     $(hostname)"
+    echo "  OS:           $(uname -o)"
+    echo "  Kernel:       $(uname -r)"
+    echo "  Architecture: $(uname -m)"
+    echo
+
+    print_color $BLUE "Hardware:"
+    echo "  CPU:          $(lscpu | grep "Model name" | cut -d: -f2 | xargs)"
+    echo "  Cores:        $(nproc)"
+    echo "  RAM:          $(free -h | awk '/^Mem:/{print $2}')"
+    echo "  Disk:         $(df -h / | awk 'NR==2{print $2}')"
+    echo
+
+    print_color $BLUE "Docker:"
+    echo "  Version:      $(docker --version | cut -d' ' -f3 | sed 's/,//')"
+    echo "  Containers:   $(docker ps -q | wc -l) running / $(docker ps -aq | wc -l) total"
+    echo "  Images:       $(docker images -q | wc -l)"
+    echo "  Volumes:      $(docker volume ls -q | wc -l)"
+    echo
+
+    print_color $BLUE "Homelab:"
+    echo "  Version:      ${VERSION}"
+    echo "  Config:       ${ENV_FILE}"
+    echo "  Directory:    ${SCRIPT_DIR}"
+}
+
+# Main command handler
+main() {
+    case "${1:-help}" in
+        start)
+            cmd_start "${@:2}"
+            ;;
+        stop)
+            cmd_stop "${@:2}"
+            ;;
+        restart)
+            cmd_restart "${@:2}"
+            ;;
+        status)
+            cmd_status "${@:2}"
+            ;;
+        logs)
+            cmd_logs "${@:2}"
+            ;;
+        check)
+            cmd_check "${@:2}"
+            ;;
+        setup)
+            cmd_setup "${@:2}"
+            ;;
+        backup)
+            cmd_backup "${@:2}"
+            ;;
+        restore)
+            cmd_restore "${@:2}"
+            ;;
+        update)
+            cmd_update "${@:2}"
+            ;;
+        clean)
+            cmd_clean "${@:2}"
+            ;;
+        ai)
+            cmd_ai "${@:2}"
+            ;;
+        email)
+            cmd_email "${@:2}"
+            ;;
+        calendar)
+            cmd_calendar "${@:2}"
+            ;;
+        dashboard)
+            cmd_dashboard "${@:2}"
+            ;;
+        urls)
+            cmd_urls "${@:2}"
+            ;;
+        info)
+            cmd_info "${@:2}"
+            ;;
+        help|--help|-h)
+            show_help
+            ;;
+        --version|-v)
+            echo "Homelab CLI v${VERSION}"
+            ;;
+        *)
+            print_color $RED "Unknown command: $1"
+            echo "Run 'homelab help' for usage information"
+            exit 1
+            ;;
+    esac
+}
+
+# Run main function
+main "$@"
