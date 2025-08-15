@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # ==========================================
@@ -70,11 +70,11 @@ services:
     hostname: mail.localhost
     restart: unless-stopped
     ports:
-      - "25:25"     # SMTP (receive)
-      - "587:587"   # SMTP (submission)
-      - "465:465"   # SMTPS
-      - "143:143"   # IMAP
-      - "993:993"   # IMAPS
+      - "2525:25" # SMTP (receive - using alt port to avoid conflict)
+      - "587:587" # SMTP (submission)
+      - "465:465" # SMTPS
+      - "143:143" # IMAP
+      - "993:993" # IMAPS
     volumes:
       - ./email/data:/data
       - ./email/config/maddy.conf:/etc/maddy/maddy.conf
@@ -253,7 +253,4 @@ volumes:
 
 networks:
   homelab:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
+    external: true

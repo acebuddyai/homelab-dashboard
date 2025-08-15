@@ -72,3 +72,13 @@ search.acebuddy.quest {
 vectors.acebuddy.quest {
     reverse_proxy qdrant:6333
 }
+
+# Webmail Interface (Roundcube)
+mail.acebuddy.quest {
+    reverse_proxy roundcube:80
+}
+
+# Calendar & Contacts (Baikal CalDAV/CardDAV)
+calendar.acebuddy.quest {
+    reverse_proxy baikal:80
+}

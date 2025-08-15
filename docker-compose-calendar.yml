@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # Simple CalDAV/CardDAV server
+  radicale:
+    image: tomsquest/docker-radicale:latest
+    container_name: radicale
+    restart: unless-stopped
+    ports:
+      - "5232:5232"
+    volumes:
+      - ./calendar/data:/data
+    environment:
+      # Use simple built-in configuration
+      - RADICALE_SERVER_HOSTS=0.0.0.0:5232
+      - RADICALE_AUTH_TYPE=none  # Start with no auth for testing
+      - RADICALE_STORAGE_FILESYSTEM_FOLDER=/data/collections
+      - RADICALE_RIGHTS_TYPE=none  # Allow all access for testing
+      - RADICALE_WEB_TYPE=internal
+      - RADICALE_LOGGING_LEVEL=info
+    networks:
+      - homelab
+    user: "1000:1000"
+
+  # Alternative: Baikal (simpler CalDAV/CardDAV server)
+  baikal:
+    image: ckulka/baikal:nginx
+    container_name: baikal
+    restart: unless-stopped
+    ports:
+      - "5233:80"
+    volumes:
+      - ./baikal/config:/var/www/baikal/config
+      - ./baikal/data:/var/www/baikal/Specific
+    environment:
+      - BAIKAL_SERVERNAME=calendar.acebuddy.quest
+    networks:
+      - homelab
+
+networks:
+  homelab:
+    external: true
