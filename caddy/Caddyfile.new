@@ -8,23 +8,9 @@ acebuddy.quest {
         respond "Homelab OK" 200
     }
 
-    # Redirect to dashboard by default
+    # Redirect to AI interface by default
     handle {
-        redir https://dashboard.acebuddy.quest{uri}
-    }
-}
-
-# Main Dashboard - Service Landing Page
-dashboard.acebuddy.quest {
-    # Serve dashboard.html as the root
-    handle / {
-        rewrite * /dashboard.html
-        reverse_proxy web-ui:80
-    }
-
-    # Serve all other files normally
-    handle {
-        reverse_proxy web-ui:80
+        redir https://ai.acebuddy.quest{uri}
     }
 }
 

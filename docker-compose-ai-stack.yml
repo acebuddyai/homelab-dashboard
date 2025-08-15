@@ -1,0 +1,208 @@
+version: "3.8"
+
+services:
+  # ============= Web UI =============
+  web-ui:
+    build:
+      context: ./web-ui
+      dockerfile: Dockerfile
+    container_name: web-ui
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.52
+    depends_on:
+      - api-gateway
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============= Workflow Orchestration =============
+  windmill-db:
+    image: postgres:16-alpine
+    container_name: windmill-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: windmill
+      POSTGRES_USER: windmill
+      POSTGRES_PASSWORD: ${WINDMILL_DB_PASSWORD:-windmill_secret_2024}
+    volumes:
+      - windmill_db:/var/lib/postgresql/data
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.63
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U windmill"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  windmill-server:
+    image: ghcr.io/windmill-labs/windmill:main
+    container_name: windmill-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://windmill:${WINDMILL_DB_PASSWORD:-windmill_secret_2024}@windmill-db/windmill?sslmode=disable
+      MODE: server
+      BASE_URL: ${WINDMILL_BASE_URL:-http://localhost:8000}
+    ports:
+      - "8000:8000"
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.61
+    depends_on:
+      windmill-db:
+        condition: service_healthy
+
+  windmill-worker:
+    image: ghcr.io/windmill-labs/windmill:main
+    container_name: windmill-worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://windmill:${WINDMILL_DB_PASSWORD:-windmill_secret_2024}@windmill-db/windmill?sslmode=disable
+      MODE: worker
+      WORKER_GROUP: default
+      REDIS_HOST: ai-redis
+      REDIS_PORT: 6379
+      OLLAMA_URL: http://ollama:11434
+      QDRANT_URL: http://qdrant:6333
+      SEARXNG_URL: http://searxng:8080
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.62
+    depends_on:
+      - windmill-server
+      - ai-redis
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - windmill_worker_data:/tmp
+
+  # ============= Knowledge & Memory =============
+  # Qdrant is already running as a separate service
+
+  ai-redis:
+    image: redis:7-alpine
+    container_name: ai-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.57
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ============= Search & Information =============
+  # SearXNG is already running as a separate service
+
+  # ============= API Gateway =============
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    restart: unless-stopped
+    environment:
+      REDIS_URL: redis://ai-redis:6379
+      REDIS_HOST: ai-redis
+      REDIS_PORT: 6379
+      QDRANT_URL: http://qdrant:6333
+      OLLAMA_URL: http://ollama:11434
+      WINDMILL_URL: http://windmill-server:8000
+      SEARXNG_URL: http://searxng:8080
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_here}
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.70
+    depends_on:
+      - ai-redis
+      - windmill-server
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============= AI/LLM Service =============
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.71
+    # CPU-only configuration - no GPU required
+    environment:
+      OLLAMA_KEEP_ALIVE: 5m
+      OLLAMA_NUM_PARALLEL: 2
+      OLLAMA_MAX_LOADED_MODELS: 1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 12G
+        reservations:
+          cpus: "2"
+          memory: 8G
+
+  # ============= Vector Database =============
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+    ports:
+      - "6333:6333"
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.73
+    environment:
+      QDRANT_LOG_LEVEL: INFO
+
+  # ============= Search Engine =============
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    restart: unless-stopped
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    ports:
+      - "8888:8080"
+    networks:
+      homelab:
+        ipv4_address: 172.20.0.74
+    environment:
+      SEARXNG_BASE_URL: "http://localhost:8888/"
+      SEARXNG_SECRET_KEY: ${SEARXNG_SECRET_KEY:-ultrasecretkey}
+
+volumes:
+  windmill_db:
+  windmill_worker_data:
+  redis_data:
+  ollama_data:
+  qdrant_data:
+
+networks:
+  homelab:
+    external: true

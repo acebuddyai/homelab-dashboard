@@ -1,0 +1,141 @@
+# =============================================================================
+# MAS CONFIGURATION TEMPLATE WITH SMTP - 2025 Edition
+# =============================================================================
+
+# Enhanced telemetry for email debugging
+telemetry:
+  tracing:
+    opentelemetry:
+      resource:
+        service.name: matrix-authentication-service
+        service.version: latest
+      exporter: stdout
+  logs:
+    format: json
+    level: debug
+
+# HTTP listeners configuration
+http:
+  public_base: https://auth.${MATRIX_DOMAIN}/
+  listeners:
+    - name: web
+      binds:
+        - address: 0.0.0.0:8080
+      proxy_protocol: false
+      resources:
+        - name: discovery
+        - name: human
+        - name: oauth
+        - name: compat
+    - name: internal
+      binds:
+        - address: 0.0.0.0:8081
+      proxy_protocol: false
+      resources:
+        - name: health
+
+# Database configuration
+database:
+  uri: postgres://mas_user:${MAS_POSTGRES_PASSWORD}@mas-postgres:5432/mas
+  max_connections: 10
+  min_connections: 0
+  connect_timeout: 30
+  idle_timeout: 600
+  max_lifetime: 1800
+
+# 📧 GMAIL-OPTIMIZED Email configuration
+email:
+  from: '"Matrix ${MATRIX_DOMAIN}" <${SMTP_USER}>'
+  reply_to: "${SMTP_USER}"
+  transport: smtp
+  mode: starttls
+  hostname: ${SMTP_HOST}
+  port: ${SMTP_PORT}
+  username: ${SMTP_USER}
+  password: ${SMTP_PASSWORD}
+
+public_base_url: https://auth.${MATRIX_DOMAIN}/
+issuer: https://auth.${MATRIX_DOMAIN}/
+
+secrets:
+  encryption: "${MAS_ENCRYPTION_KEY}"
+  keys:
+    - kid: "${MATRIX_DOMAIN}-mas-key-2025"
+      key: |
+        -----BEGIN PRIVATE KEY-----
+        MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC/6hS6RpvUH+cN
+        HkabM0N7iSQs89aTaUtikbkrvsq8DdWNiDuZVppI5D2kUkEu1hQKEHooXDJO1vSY
+        8adcJ/zYKOZ+NXRT0avYTkxRa0TGE+qmvQH6EQ/PNPnoF7TUaSBj5MnrYpf/koT2
+        vPMGJX3Rnaelh0mhQzJEylSlCSFHw33Y4fQ0FbNuPDKVwBrnnUAUuoOz+vCKMgTn
+        MHoV0T5JRkfK160sdHXq7Bpbu5xooyLwmZG5LO9LNlD4Ew30Gh8QMSpyKeMUEgX+
+        DcFwCx41Hvb7ITunp68ujndPtKL7Of5iTwU8cssChjGgxrj86DB0qhXcgfz9zH1s
+        wEb2pw/XAgMBAAECggEAPQZqq+b68yNn3aiEbCKLcVNlEPRChaJkScYruwjSv6So
+        hPZOeU5sBgSpw0AyoPmK6r5dkcrrZl187stc2/WNNZEf5f8KbALOoZwYMYWqG1BG
+        +9k7MTDOtaVTWCV9p1N8bLdaK8KwsaB+LlVb89blIMwAfKa9140eBXjPHKGAFyi5
+        ZERnlFJg5aBDZ48/EqHzq43bIs9dtlR3wYYwXV0jgRlgEHXMxlbBH0kK/378S93N
+        sBQSKWKX/9xIAfZIkCVQJUrdhDByoVimPUdUy3P9jGVDx4oXo/FBzNfWTEwICqvA
+        YY+/nYwMbNGOtFPf4BDYe3O0jWFhh1/GnyJwj20PXQKBgQD3NElHNT4gG0oUC/L3
+        R34tCrNt4SG9bpU9kX20btv6sGk4WUck0TmNRkM2dkCHWN94+AaXfvGmCTspNxQ/
+        /ErginoV70bl48t5dJqd1Pfzmu3tNFARa3csN7ZLPhHxsxNanviZcnXMOy1eFGHU
+        TOK/qNsSm8TR3PLqZhAF8i4QmwKBgQDGvizIuYJ5DchoSJNdOnSn44QQZFN0Dxxh
+        pRfE84nrM7pTBAnyyuNzYd+uX3odRobbDfuLjuRswpa54Soc3xBwnd23f+Iy6rGJ
+        4NPb728p+7zjK1Xe6cGsROjtINh82xfH96SPSYXDdxyjiuNoULXWXA40E3c6guf1
+        mNKRZU17dQKBgANEO5unRnTiJ25wYfuGhFJQC+Lt0KZSKcKwg3q45EtBvYIzG8+O
+        vDXzsbusgFnJgNp2XI/v632ILbHzul7GFK825ToY+VTcV7n5InnncIdVisNRp6Uz
+        SFXbPptr7IzHEwBljV9ptcjHF2hg2JIXmf9yWcK7MDSduNAEHT4W3yj1AoGBAKJL
+        fqrTwtY0CSoPyjdhmw3W32u7YeLuzBB5DvYIouHtNgTA0ZbxU9hPXqg407HAfDO6
+        MWZ/481lAkz8sLUu+2/bmslUp1VJDn43mQqLdk3kgxVHuDH21e9lvoiWP/OFvt/P
+        PRS9x3wdcseijZ4L+tH4Dqk8FCs151JJ3/pXrXRZAoGBANh33E2C5FlY80GKYM1o
+        oVTfg4Sjf9NOkOEd4wad/0UrM1h1j+WRzBviOhve2rzT4KDfTEW8RNTOkwppI2oK
+        BWRbm3i5TfdFXaepUMUWoDy19YbMjnSnkJK6pq0Kn3lCUMdqj+DIto17TGGR22Dk
+        cixH98WwH7oSeFX0IX1/mhKg
+        -----END PRIVATE KEY-----
+
+matrix:
+  homeserver: ${MATRIX_DOMAIN}
+  secret: "${MATRIX_SECRET}"
+  endpoint: http://matrix-synapse:8008/
+
+passwords:
+  enabled: true
+  minimum_complexity: 0
+  schemes:
+    - version: 1
+      algorithm: bcrypt
+    - version: 2
+      algorithm: argon2id
+
+account:
+  email_change_allowed: true
+  password_registration_enabled: true
+  password_recovery_enabled: true
+
+session:
+  cookie:
+    name: mas-session
+    secure: true
+    same_site: lax
+
+templates:
+  path: /usr/local/share/mas-cli/templates/
+  assets_manifest: /usr/local/share/mas-cli/manifest.json
+
+assets:
+  path: /usr/local/share/mas-cli/assets/
+
+policy:
+  path: /usr/local/share/mas-cli/policy.wasm
+
+clients:
+  - client_id: "0000000000000000000SYNAPSE"
+    client_auth_method: client_secret_basic
+    client_secret: "${SYNAPSE_CLIENT_SECRET}"
+    redirect_uris: []
+
+upstream_oauth2:
+  providers: []
+
+oauth2:
+  refresh_token:
+    disabled: false
+    max_lifetime: 2592000

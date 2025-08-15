@@ -1,8 +1,31 @@
-# 🔐 Centralized Secrets Management for Matrix + MAS (2025 Edition)
+# 🏠 Homelab Dashboard & Services
 
 ## 📖 Overview
 
-This setup implements modern best practices for managing secrets in your Matrix homeserver with MAS (Matrix Authentication Service) using centralized environment variables.
+A comprehensive self-hosted homelab setup with an AI-powered dashboard, Matrix chat server, and integrated services for productivity and communication.
+
+## 🖥️ Hardware Specifications
+
+- **System**: HP EliteDesk 800 G4 DM
+- **CPU**: Intel Core i5-8500T
+- **RAM**: 32GB DDR4
+- **Storage**: 512GB SSD
+- **GPU**: None (CPU-only operation)
+
+## 🚀 Features
+
+### ✅ Implemented
+- **AI Chat Interface**: Powered by Ollama with llama3.2:1b model
+- **Matrix Homeserver**: Synapse with MAS authentication
+- **Web Dashboard**: Modern UI with sidebar navigation
+- **API Gateway**: Centralized service routing
+
+### 🔄 In Progress
+- **Email Server**: Local email hosting (Mailcow/Postfix)
+- **Calendar**: CalDAV/CardDAV server (Radicale)
+- **Cloud Storage**: Nextcloud integration
+- **Knowledge Base**: Document management system
+- **Task Management**: Todo lists and project tracking
 
 ## 🏗️ Architecture
 
@@ -10,39 +33,80 @@ This setup implements modern best practices for managing secrets in your Matrix 
 homelab/
 ├── .env                    # 🔐 Central secrets file (DO NOT COMMIT)
 ├── .env.example           # 📝 Example template 
-├── deploy.sh              # 🚀 Master deployment script
-├── mas/
-│   ├── config.template.yaml    # 📄 MAS config template
-│   ├── config.yaml            # 🔧 Generated config (DO NOT COMMIT)
-│   ├── generate-config.sh     # 🛠️ Config generation script
-│   └── docker-compose.yml     # 🐳 Updated with env vars
-└── matrix/
-    ├── update-synapse-config.sh # 🛠️ Synapse config updater
-    └── docker-compose.yml      # 🐳 Updated with env vars
+├── docker-compose.yml     # 🐳 Main services
+├── web-ui/                # 🎨 Dashboard interface
+│   ├── index.html         # Main dashboard
+│   ├── dashboard.html     # Full dashboard view
+│   └── app.js            # Backend API server
+├── matrix/               # 💬 Matrix chat server
+│   └── docker-compose.yml
+├── mas/                  # 🔑 Matrix Authentication Service
+│   └── docker-compose.yml
+├── nextcloud/            # ☁️ Cloud storage (coming soon)
+├── services/             # 📦 Additional services
+└── scripts/              # 🛠️ Utility scripts
 ```
 
 ## 🚀 Quick Start
 
-1. **Copy example environment file:**
+1. **Clone the repository:**
    ```bash
-   cd ~/homelab
-   cp .env.example .env
+   git clone https://github.com/yourusername/homelab.git
+   cd homelab
    ```
 
-2. **Edit .env with your actual values:**
+2. **Set up environment variables:**
    ```bash
+   cp .env.example .env
    nano .env
    ```
 
-3. **Deploy everything:**
+3. **Deploy all services:**
    ```bash
    ./deploy.sh
    ```
 
-## 🔑 Secret Generation
+4. **Access the dashboard:**
+   ```
+   http://localhost:8080
+   ```
 
-Generate your secrets using these commands:
+## 🎯 Dashboard Features
 
+### AI Chat
+- Ollama integration with CPU-optimized models
+- Real-time conversation interface
+- Response time: 1-3 seconds
+- Memory usage: 8-12GB allocated
+
+### Daily Briefing
+- Weather updates
+- Calendar events
+- News aggregation
+- Task reminders
+
+### Services Integration
+- **Email**: Local email server with webmail interface
+- **Calendar**: CalDAV/CardDAV support for all devices
+- **Drive**: Nextcloud for file storage and sync
+- **Tasks**: Project and task management
+- **Knowledge Base**: Documentation and notes
+
+## 🐳 Docker Services
+
+| Service | Port | Description |
+|---------|------|-------------|
+| Dashboard | 8080 | Main web interface |
+| Ollama | 11434 | AI model server |
+| Matrix | 8008 | Chat server |
+| MAS | 8081 | Authentication service |
+| Nextcloud | 8082 | Cloud storage (planned) |
+| Email | 8083 | Webmail interface (planned) |
+| Calendar | 8084 | CalDAV server (planned) |
+
+## 🔑 Secret Management
+
+### Generate secrets:
 ```bash
 # MAS Encryption Key (32 bytes)
 openssl rand -hex 32
@@ -50,111 +114,100 @@ openssl rand -hex 32
 # Matrix Secret (48 bytes) 
 openssl rand -hex 48
 
-# Synapse Client Secret (48 bytes)
-openssl rand -hex 48
-
 # Database passwords (24 characters)
 openssl rand -base64 24
 ```
 
-## 🔧 Manual Operations
+### Environment Variables:
+| Variable | Description |
+|----------|-------------|
+| `DOMAIN` | Your primary domain |
+| `MATRIX_DOMAIN` | Matrix server domain |
+| `MAS_ENCRYPTION_KEY` | MAS encryption key |
+| `MATRIX_SECRET` | Shared secret |
+| `MAS_POSTGRES_PASSWORD` | MAS database password |
 
-### Generate MAS Config Only
+## 🛠️ Maintenance
+
+### Update services:
 ```bash
-cd mas
-./generate-config.sh
+docker-compose pull
+docker-compose up -d
 ```
 
-### Update Synapse Config Only  
+### Check logs:
 ```bash
-cd matrix
-./update-synapse-config.sh
+docker logs -f [service-name]
 ```
 
-### Restart Services
+### Backup data:
 ```bash
-# Restart MAS
-cd mas && docker-compose restart
-
-# Restart Matrix 
-cd matrix && docker-compose restart matrix-synapse
+./scripts/backup.sh
 ```
 
 ## 🏥 Health Checks
 
 ```bash
-# Check MAS health
-curl http://localhost:8081/health
+# Check all services
+docker-compose ps
 
-# Validate MAS config
-docker exec matrix-auth-service mas-cli config check
+# AI Chat health
+curl http://localhost:11434/api/tags
 
-# Check service logs
-docker logs -f matrix-auth-service
-docker logs -f matrix-synapse
+# Matrix health
+curl http://localhost:8008/_matrix/client/versions
+
+# Dashboard health
+curl http://localhost:8080
 ```
 
-## 🛡️ Security Features
+## 🐛 Troubleshooting
+
+### AI Chat Issues
+- Ensure Ollama is running: `docker ps | grep ollama`
+- Check memory allocation: `docker stats ollama`
+- Pull model if missing: `docker exec ollama ollama pull llama3.2:1b`
+
+### Dashboard Issues
+- Clear browser cache: Ctrl+Shift+R
+- Check console logs: F12 → Console
+- Restart service: `docker-compose restart web-ui`
+
+## 📝 Planned Features
+
+- [ ] Email server with IMAP/SMTP
+- [ ] Calendar with CalDAV sync
+- [ ] Nextcloud integration
+- [ ] Automated backups
+- [ ] Monitoring dashboard
+- [ ] VPN server
+- [ ] Media server (Jellyfin)
+- [ ] Home automation (Home Assistant)
+
+## 🔒 Security Features
 
 - ✅ Centralized secret management
 - ✅ Environment variable substitution  
 - ✅ No secrets in git repository
 - ✅ Secure file permissions (600)
-- ✅ Backup and rollback capability
-- ✅ Config validation scripts
+- ✅ Docker network isolation
+- ✅ Reverse proxy with Caddy
 
-## 🔄 Secret Rotation
+## 📚 Documentation
 
-To rotate secrets:
+- [Matrix Authentication Service](https://element-hq.github.io/matrix-authentication-service/)
+- [Ollama Documentation](https://ollama.ai/docs)
+- [Nextcloud Admin Manual](https://docs.nextcloud.com/server/latest/admin_manual/)
+- [Docker Compose Reference](https://docs.docker.com/compose/)
 
-1. Generate new secrets
-2. Update .env file  
-3. Run: `./deploy.sh`
-4. Verify services are healthy
+## 📄 License
 
-## 📝 Environment Variables
+MIT License - See LICENSE file for details
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `DOMAIN` | Your primary domain | `example.com` |
-| `MATRIX_DOMAIN` | Matrix server domain | `example.com` |
-| `MAS_ENCRYPTION_KEY` | MAS encryption key (32 bytes hex) | `abc123...` |
-| `MATRIX_SECRET` | Shared secret (48 bytes hex) | `def456...` | 
-| `SYNAPSE_CLIENT_SECRET` | OIDC client secret (48 bytes hex) | `ghi789...` |
-| `MAS_POSTGRES_PASSWORD` | MAS database password | `securepass123` |
+## 🤝 Contributing
 
-## 🐛 Troubleshooting
-
-### MAS Config Issues
-```bash
-# Validate template
-cd mas && ./generate-config.sh
-
-# Check logs
-docker logs matrix-auth-service
-```
-
-### Synapse Issues  
-```bash
-# Update config
-cd matrix && ./update-synapse-config.sh
-
-# Check logs
-docker logs matrix-synapse
-```
-
-### Permission Issues
-```bash
-# Fix ownership
-sudo chown -R $USER:$USER homelab/
-chmod 600 homelab/.env
-```
-
-## 📚 References
-
-- [Matrix Authentication Service Documentation](https://element-hq.github.io/matrix-authentication-service/)
-- [MSC3861: Next-generation auth for Matrix](https://github.com/matrix-org/matrix-spec-proposals/pull/3861)
-- [Element MAS Migration Guide](https://willlewis.co.uk/blog/posts/stronger-matrix-auth-mas-synapse-docker-compose/)
+Pull requests are welcome! For major changes, please open an issue first.
 
 ---
-Last updated: $(date +"%Y-%m-%d")
+**System Optimized for**: HP EliteDesk 800 G4 DM with 32GB RAM  
+**Last Updated**: January 2025

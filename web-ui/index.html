@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homelab AI Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .chat-container {
+            height: calc(100vh - 200px);
+        }
+        .sidebar-item:hover {
+            background-color: rgba(99, 102, 241, 0.1);
+            border-left: 3px solid #6366f1;
+        }
+        .active-tab {
+            background-color: rgba(99, 102, 241, 0.1);
+            border-left: 3px solid #6366f1;
+        }
+        .message-bubble {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-robot text-3xl"></i>
+                    <h1 class="text-2xl font-bold">Homelab AI Assistant</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="connectionStatus" class="flex items-center">
+                        <i class="fas fa-circle text-green-400 mr-2"></i>
+                        Connected
+                    </span>
+                    <button onclick="openSettings()" class="hover:bg-white hover:bg-opacity-20 p-2 rounded">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex h-screen pt-16">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white shadow-lg">
+            <nav class="p-4">
+                <div class="mb-6">
+                    <h3 class="text-gray-500 uppercase text-xs font-semibold mb-2">Main</h3>
+                    <div class="space-y-1">
+                        <div class="sidebar-item active-tab p-3 rounded cursor-pointer" onclick="switchTab('chat')">
+                            <i class="fas fa-comments mr-3"></i> AI Chat
+                        </div>
+                        <div class="sidebar-item p-3 rounded cursor-pointer" onclick="switchTab('briefing')">
+                            <i class="fas fa-newspaper mr-3"></i> Daily Briefing
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-gray-500 uppercase text-xs font-semibold mb-2">Productivity</h3>
+                    <div class="space-y-1">
+                        <div class="sidebar-item p-3 rounded cursor-pointer" onclick="switchTab('tasks')">
+                            <i class="fas fa-tasks mr-3"></i> Tasks
+                        </div>
+                        <div class="sidebar-item p-3 rounded cursor-pointer" onclick="switchTab('knowledge')">
+                            <i class="fas fa-brain mr-3"></i> Knowledge Base
+                        </div>
+                        <div class="sidebar-item p-3 rounded cursor-pointer" onclick="switchTab('workflows')">
+                            <i class="fas fa-project-diagram mr-3"></i> Workflows
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-gray-500 uppercase text-xs font-semibold mb-2">Tools</h3>
+                    <div class="space-y-1">
+                        <div class="sidebar-item p-3 rounded cursor-pointer" onclick="switchTab('search')">
+                            <i class="fas fa-search mr-3"></i> Web Search
+                        </div>
+                        <div class="sidebar-item p-3 rounded cursor-pointer" onclick="switchTab('analytics')">
+                            <i class="fas fa-chart-line mr-3"></i> Analytics
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-hidden">
+            <!-- Chat Tab -->
+            <div id="chatTab" class="h-full flex flex-col p-6">
+                <div class="bg-white rounded-lg shadow-lg flex-1 flex flex-col">
+                    <div class="border-b p-4">
+                        <h2 class="text-xl font-semibold">AI Assistant</h2>
+                        <p class="text-gray-500 text-sm">Powered by Llama 3.2</p>
+                    </div>
+
+                    <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4">
+                        <!-- Messages will be added here -->
+                        <div class="message-bubble">
+                            <div class="flex items-start space-x-3">
+                                <div class="bg-indigo-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                                    <i class="fas fa-robot text-sm"></i>
+                                </div>
+                                <div class="bg-gray-100 rounded-lg p-3 max-w-md">
+                                    <p class="text-sm">Hello! I'm your AI assistant. How can I help you today?</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t p-4">
+                        <div class="flex space-x-2">
+                            <input
+                                type="text"
+                                id="chatInput"
+                                class="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder="Type your message..."
+                                onkeypress="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }"
+                            >
+                            <button
+                                onclick="sendMessage()"
+                                class="bg-indigo-500 text-white px-6 py-2 rounded-lg hover:bg-indigo-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                id="sendButton"
+                            >
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Briefing Tab -->
+            <div id="briefingTab" class="h-full p-6 hidden">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">Daily Briefing</h2>
+                        <button
+                            onclick="generateBriefing()"
+                            class="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600"
+                        >
+                            <i class="fas fa-sync-alt mr-2"></i> Refresh
+                        </button>
+                    </div>
+
+                    <div id="briefingContent" class="space-y-6">
+                        <!-- Briefing content will be loaded here -->
+                        <div class="text-center py-12">
+                            <div class="loader mx-auto mb-4"></div>
+                            <p class="text-gray-500">Loading your briefing...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks Tab -->
+            <div id="tasksTab" class="h-full p-6 hidden">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">Task Management</h2>
+                        <button
+                            onclick="openTaskModal()"
+                            class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                        >
+                            <i class="fas fa-plus mr-2"></i> New Task
+                        </button>
+                    </div>
+
+                    <div class="mb-4 flex space-x-2">
+                        <button onclick="filterTasks('all')" class="px-3 py-1 bg-gray-200 rounded-lg">All</button>
+                        <button onclick="filterTasks('todo')" class="px-3 py-1 bg-blue-200 rounded-lg">To Do</button>
+                        <button onclick="filterTasks('in_progress')" class="px-3 py-1 bg-yellow-200 rounded-lg">In Progress</button>
+                        <button onclick="filterTasks('done')" class="px-3 py-1 bg-green-200 rounded-lg">Done</button>
+                    </div>
+
+                    <div id="tasksList" class="space-y-3">
+                        <!-- Tasks will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Knowledge Tab -->
+            <div id="knowledgeTab" class="h-full p-6 hidden">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">Knowledge Base</h2>
+                        <div class="space-x-2">
+                            <button
+                                onclick="openDocumentModal()"
+                                class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                            >
+                                <i class="fas fa-upload mr-2"></i> Add Document
+                            </button>
+                            <button
+                                onclick="openUrlModal()"
+                                class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600"
+                            >
+                                <i class="fas fa-link mr-2"></i> Add URL
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <div class="flex space-x-2">
+                            <input
+                                type="text"
+                                id="knowledgeSearch"
+                                class="flex-1 border rounded-lg px-4 py-2"
+                                placeholder="Search knowledge base..."
+                            >
+                            <button
+                                onclick="searchKnowledge()"
+                                class="bg-indigo-500 text-white px-6 py-2 rounded-lg hover:bg-indigo-600"
+                            >
+                                Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="knowledgeResults" class="space-y-4">
+                        <!-- Search results will appear here -->
+                    </div>
+
+                    <div id="knowledgeStats" class="mt-6 p-4 bg-gray-100 rounded-lg">
+                        <!-- Stats will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workflows Tab -->
+            <div id="workflowsTab" class="h-full p-6 hidden">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-2xl font-bold mb-6">Workflows</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Workflow Cards -->
+                        <div class="border rounded-lg p-4 hover:shadow-lg transition cursor-pointer" onclick="runWorkflow('daily_briefing')">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-sun text-yellow-500 text-2xl mr-3"></i>
+                                <h3 class="font-semibold">Daily Briefing</h3>
+                            </div>
+                            <p class="text-gray-600 text-sm">Generate your personalized daily briefing</p>
+                        </div>
+
+                        <div class="border rounded-lg p-4 hover:shadow-lg transition cursor-pointer" onclick="runWorkflow('task_automation')">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-tasks text-blue-500 text-2xl mr-3"></i>
+                                <h3 class="font-semibold">Task Automation</h3>
+                            </div>
+                            <p class="text-gray-600 text-sm">Automate task creation and management</p>
+                        </div>
+
+                        <div class="border rounded-lg p-4 hover:shadow-lg transition cursor-pointer" onclick="runWorkflow('knowledge_sync')">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-sync text-green-500 text-2xl mr-3"></i>
+                                <h3 class="font-semibold">Knowledge Sync</h3>
+                            </div>
+                            <p class="text-gray-600 text-sm">Sync and update knowledge base</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <h3 class="text-lg font-semibold mb-4">Recent Workflow Runs</h3>
+                        <div id="workflowHistory" class="space-y-2">
+                            <!-- Workflow history will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Tab -->
+            <div id="searchTab" class="h-full p-6 hidden">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-2xl font-bold mb-6">Web Search</h2>
+
+                    <div class="mb-6">
+                        <div class="flex space-x-2">
+                            <input
+                                type="text"
+                                id="webSearchInput"
+                                class="flex-1 border rounded-lg px-4 py-2"
+                                placeholder="Search the web..."
+                            >
+                            <select id="searchCategory" class="border rounded-lg px-4 py-2">
+                                <option value="general">General</option>
+                                <option value="news">News</option>
+                                <option value="science">Science</option>
+                                <option value="it">Technology</option>
+                            </select>
+                            <button
+                                onclick="performWebSearch()"
+                                class="bg-indigo-500 text-white px-6 py-2 rounded-lg hover:bg-indigo-600"
+                            >
+                                Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="searchResults" class="space-y-4">
+                        <!-- Search results will appear here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analyticsTab" class="h-full p-6 hidden">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-2xl font-bold mb-6">Analytics Dashboard</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        <!-- Stats Cards -->
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div></div>
+                                    <p class="text-sm opacity-80">Total Tasks</p>
+                                    <p class="text-2xl font-bold" id="totalTasks">0</p>
+                                </div>
+                                <i class="fas fa-tasks text-3xl opacity-50"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm opacity-80">Documents</p>
+                                    <p class="text-2xl font-bold" id="totalDocs">0</p>
+                                </div>
+                                <i class="fas fa-file-alt text-3xl opacity-50"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm opacity-80">AI Queries</p>
+                                    <p class="text-2xl font-bold" id="totalQueries">0</p>
+                                </div>
+                                <i class="fas fa-brain text-3xl opacity-50"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm opacity-80">Workflows</p>
+                                    <p class="text-2xl font-bold" id="totalWorkflows">0</p>
+                                </div>
+                                <i class="fas fa-project-diagram text-3xl opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="border rounded-lg p-4">
+                            <h3 class="font-semibold mb-4">Recent Activity</h3>
+                            <div id="recentActivity" class="space-y-2">
+                                <!-- Activity items will be loaded here -->
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg p-4">
+                            <h3 class="font-semibold mb-4">System Health</h3>
+                            <div id="systemHealth" class="space-y-3">
+                                <!-- Health status will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Task Modal -->
+    <div id="taskModal" class="modal">
+        <div class="bg-white rounded-lg p-6 w-96">
+            <h3 class="text-xl font-bold mb-4">Create New Task</h3>
+            <div class="space-y-4">
+                <input type="text" id="taskTitle" class="w-full border rounded px-3 py-2" placeholder="Task title">
+                <textarea id="taskDescription" class="w-full border rounded px-3 py-2" rows="3" placeholder="Description"></textarea>
+                <select id="taskPriority" class="w-full border rounded px-3 py-2">
+                    <option value="low">Low Priority</option>
+                    <option value="medium" selected>Medium Priority</option>
+                    <option value="high">High Priority</option>
+                    <option value="urgent">Urgent</option>
+                </select>
+                <input type="datetime-local" id="taskDueDate" class="w-full border rounded px-3 py-2">
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button onclick="closeTaskModal()" class="px-4 py-2 border rounded hover:bg-gray-100">Cancel</button>
+                <button onclick="createTask()" class="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Modal -->
+    <div id="documentModal" class="modal">
+        <div class="bg-white rounded-lg p-6 w-96">
+            <h3 class="text-xl font-bold mb-4">Add Document</h3>
+            <div class="space-y-4">
+                <input type="text" id="docTitle" class="w-full border rounded px-3 py-2" placeholder="Document title">
+                <textarea id="docContent" class="w-full border rounded px-3 py-2" rows="6" placeholder="Paste document content here"></textarea>
+                <input type="text" id="docSource" class="w-full border rounded px-3 py-2" placeholder="Source (optional)">
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button onclick="closeDocumentModal()" class="px-4 py-2 border rounded hover:bg-gray-100">Cancel</button>
+                <button onclick="addDocument()" class="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- URL Modal -->
+    <div id="urlModal" class="modal">
+        <div class="bg-white rounded-lg p-6 w-96">
+            <h3 class="text-xl font-bold mb-4">Add URL</h3>
+            <div class="space-y-4">
+                <input type="url" id="urlInput" class="w-full border rounded px-3 py-2" placeholder="https://example.com">
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button onclick="closeUrlModal()" class="px-4 py-2 border rounded hover:bg-gray-100">Cancel</button>
+                <button onclick="addUrl()" class="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="bg-white rounded-lg p-6 w-96">
+            <h3 class="text-xl font-bold mb-4">Settings</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">API URL</label>
+                    <input type="text" id="apiUrl" class="w-full border rounded px-3 py-2" value="http://localhost:3000">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Default Model</label>
+                    <select id="defaultModel" class="w-full border rounded px-3 py-2">
+                        <option value="llama3.2:1b">Llama 3.2 1B (Fast - CPU Optimized)</option>
+                        <option value="llama3.2:3b">Llama 3.2 3B (Balanced - CPU Optimized)</option>
+                        <option value="llama3.2:latest">Llama 3.2 Latest</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">User ID</label>
+                    <input type="text" id="userId" class="w-full border rounded px-3 py-2" value="default">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button onclick="closeSettings()" class="px-4 py-2 border rounded hover:bg-gray-100">Cancel</button>
+                <button onclick="saveSettings()" class="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
