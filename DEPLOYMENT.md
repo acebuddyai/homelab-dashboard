@@ -17,7 +17,7 @@
 
 The Homelab AI Assistant is a self-hosted, privacy-focused AI system that combines:
 - **Local LLM inference** via Ollama
-- **Workflow orchestration** with Windmill
+- **Workflow automation** with Node-RED
 - **Vector database** for RAG/memory (Qdrant)
 - **Web search** capabilities (SearXNG)
 - **Task management** integration
@@ -56,7 +56,7 @@ The Homelab AI Assistant is a self-hosted, privacy-focused AI system that combin
 ### Network Requirements
 - Ports 80/443 (HTTP/HTTPS)
 - Port 3000 (API Gateway)
-- Port 8000 (Windmill)
+- Port 1880 (Node-RED)
 - Port 6333 (Qdrant)
 
 ## 🚀 Quick Start
@@ -130,12 +130,11 @@ DOMAIN=yourdomain.com
 ADMIN_EMAIL=admin@yourdomain.com
 
 # Database Passwords (generate secure ones)
-WINDMILL_DB_PASSWORD=<generate-secure-password>
 POSTGRES_PASSWORD=<generate-secure-password>
 
 # API Keys
 JWT_SECRET=<generate-jwt-secret>
-WINDMILL_TOKEN=<generate-token>
+NODE_RED_CREDENTIAL_SECRET=<generate-credential-secret>
 SEARXNG_SECRET=<generate-secret>
 
 # Model Configuration
@@ -212,15 +211,15 @@ docker exec -it ollama ollama pull mixtral:latest
 docker exec -it ollama ollama pull codellama:latest
 ```
 
-### Step 8: Deploy Windmill Workflows
+### Step 8: Deploy Node-RED Flows
 
 ```bash
-# Copy workflows to Windmill
-docker cp windmill/workflows windmill-server:/tmp/
+# Node-RED flows are managed through the web interface
+# Access Node-RED at http://localhost:1880
+# Import flows from the flows/ directory or create new ones
 
-# Import workflows (requires Windmill CLI or API)
-docker exec -it windmill-server windmill workspace add homelab
-docker exec -it windmill-server windmill sync push /tmp/workflows
+# To backup flows:
+docker exec -it node-red cat /data/flows.json > flows_backup.json
 ```
 
 ## ⚙️ Configuration
@@ -233,7 +232,7 @@ After deployment, services are available at:
 |---------|-------------|--------------|---------|
 | Web UI | http://localhost:8080 | https://ai.yourdomain.com | Main interface |
 | API Gateway | http://localhost:3000 | https://api.yourdomain.com | API endpoint |
-| Windmill | http://localhost:8000 | https://workflows.yourdomain.com | Workflow engine |
+| Node-RED | http://localhost:1880 | https://workflows.yourdomain.com | Flow automation |
 | Open WebUI | http://localhost:8080 | https://chat.yourdomain.com | LLM chat interface |
 | Qdrant | http://localhost:6333 | Internal only | Vector database |
 | Redis | redis://localhost:6379 | Internal only | Cache/sessions |
@@ -254,8 +253,10 @@ EMBEDDING_MODEL=all-minilm
 
 ### Workflow Configuration
 
-Workflows are stored in `windmill/workflows/` and include:
-- `daily_briefing.py` - Daily summary generation
+Flows are stored in Node-RED and can include:
+- Home automation flows
+- API integrations
+- Data processing pipelines
 - `task_automation.py` - Task management
 - `knowledge_management.py` - RAG and document management
 
@@ -276,8 +277,8 @@ Workflows are stored in `windmill/workflows/` and include:
         ┌───────────────────┼───────────────────┐
         ▼                   ▼                   ▼
 ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-│   Windmill   │   │    Ollama    │   │    Qdrant    │
-│  (Workflows) │   │    (LLMs)    │   │   (Vectors)  │
+│   Node-RED   │   │    Ollama    │   │    Qdrant    │
+│    (Flows)   │   │    (LLMs)    │   │   (Vectors)  │
 └──────────────┘   └──────────────┘   └──────────────┘
         │                   │                   │
         └───────────────────┼───────────────────┘
@@ -294,9 +295,7 @@ Workflows are stored in `windmill/workflows/` and include:
 |-----------|-------|---------|-----------|
 | ollama | ollama/ollama:latest | LLM inference | 4GB+ RAM |
 | open-webui | ghcr.io/open-webui/open-webui:main | Chat UI | 512MB RAM |
-| windmill-server | ghcr.io/windmill-labs/windmill:main | Workflow server | 1GB RAM |
-| windmill-worker | ghcr.io/windmill-labs/windmill:main | Workflow executor | 2GB RAM |
-| windmill-db | postgres:16-alpine | Windmill database | 512MB RAM |
+| node-red | nodered/node-red:latest | Flow automation | 512MB RAM |
 | qdrant | qdrant/qdrant:latest | Vector database | 1GB RAM |
 | redis | redis:7-alpine | Cache/sessions | 256MB RAM |
 | searxng | searxng/searxng:latest | Web search | 512MB RAM |
@@ -313,8 +312,8 @@ http://localhost:8080
 # API Gateway
 http://localhost:3000
 
-# Windmill
-http://localhost:8000
+# Node-RED
+http://localhost:1880
 ```
 
 ### External Access (with domain)
@@ -331,7 +330,7 @@ https://workflows.yourdomain.com
 
 ### Default Credentials
 
-- **Windmill**: admin@windmill.dev / changeme (change immediately!)
+- **Node-RED**: Configure through web interface on first access
 - **Open WebUI**: No auth by default (enable in production)
 
 ## 🔧 Troubleshooting
@@ -364,8 +363,8 @@ docker logs ollama
 
 #### 3. Database Connection Issues
 ```bash
-# Check PostgreSQL
-docker exec -it windmill-db pg_isready
+# Check Node-RED
+curl http://localhost:1880
 
 # Check Qdrant
 curl http://localhost:6333/health
@@ -437,8 +436,8 @@ docker exec -it <container> sh -c 'find /var/log -type f -mtime +7 -delete'
 # Update LLM models
 docker exec -it ollama ollama pull llama3.2:latest
 
-# Optimize databases
-docker exec -it windmill-db psql -U windmill -c "VACUUM ANALYZE;"
+# Backup Node-RED flows
+docker exec -it node-red cat /data/flows.json > backups/flows_$(date +%Y%m%d).json
 ```
 
 ## 🔒 Security Considerations
@@ -497,8 +496,8 @@ Create `scripts/backup.sh`:
 BACKUP_DIR="/backups/homelab-ai/$(date +%Y%m%d)"
 mkdir -p $BACKUP_DIR
 
-# Backup databases
-docker exec windmill-db pg_dump -U windmill > $BACKUP_DIR/windmill.sql
+# Backup Node-RED data
+docker cp node-red:/data $BACKUP_DIR/node-red-data
 docker exec redis redis-cli SAVE
 docker cp redis:/data/dump.rdb $BACKUP_DIR/
 
@@ -510,7 +509,7 @@ docker run --rm -v homelab_qdrant_storage:/data -v $BACKUP_DIR:/backup \
   alpine tar czf /backup/qdrant.tar.gz /data
 
 # Backup configuration
-cp -r .env caddy/ windmill/workflows/ $BACKUP_DIR/
+cp -r .env caddy/ $BACKUP_DIR/
 
 echo "Backup completed: $BACKUP_DIR"
 ```
@@ -521,8 +520,8 @@ echo "Backup completed: $BACKUP_DIR"
 # Stop services
 docker-compose -f docker-compose-ai-stack.yml down
 
-# Restore databases
-docker exec -i windmill-db psql -U windmill < backup/windmill.sql
+# Restore Node-RED data
+docker cp backup/node-red-data/. node-red:/data/
 docker cp backup/dump.rdb redis:/data/
 
 # Restore volumes
@@ -545,7 +544,7 @@ cat > scripts/health-check.sh << 'EOF'
 echo "Checking service health..."
 
 # Check each service
-services=("ollama" "windmill-server" "qdrant" "redis" "api-gateway")
+services=("ollama" "node-red" "qdrant" "redis" "api-gateway")
 
 for service in "${services[@]}"; do
     if docker ps | grep -q $service; then
@@ -632,7 +631,7 @@ grafana:
 
 This project uses only truly open-source components:
 - Ollama (MIT)
-- Windmill (Apache 2.0)
+- Node-RED (Apache 2.0)
 - Qdrant (Apache 2.0)
 - Redis (BSD)
 - PostgreSQL (PostgreSQL License)

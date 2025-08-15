@@ -42,7 +42,7 @@ This will:
 | Redis | 6379 | redis://localhost:6379 | Cache |
 | Qdrant | 6333 | http://localhost:6333 | Vector database |
 | SearXNG | 8888 | http://localhost:8888 | Search engine |
-| Windmill | 8000 | http://localhost:8000 | Workflow engine |
+| Node-RED | 1880 | http://localhost:1880 | Flow automation |
 
 ## Testing the Chat
 
@@ -185,7 +185,7 @@ You should see a clear error message
 Once basic chat is working:
 
 1. **Test memory/knowledge features** - Store and retrieve information
-2. **Try workflow automation** - Use Windmill integration
+2. **Try workflow automation** - Use Node-RED flows
 3. **Enable web search** - Configure SearXNG
 4. **Set up embeddings** - For semantic search
 

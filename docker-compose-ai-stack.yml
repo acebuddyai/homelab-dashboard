@@ -21,65 +21,31 @@ services:
       timeout: 10s
       retries: 3
 
-  # ============= Workflow Orchestration =============
-  windmill-db:
-    image: postgres:16-alpine
-    container_name: windmill-db
+  # ============= Workflow Automation =============
+  node-red:
+    image: nodered/node-red:latest
+    container_name: node-red
     restart: unless-stopped
     environment:
-      POSTGRES_DB: windmill
-      POSTGRES_USER: windmill
-      POSTGRES_PASSWORD: ${WINDMILL_DB_PASSWORD:-windmill_secret_2024}
-    volumes:
-      - windmill_db:/var/lib/postgresql/data
-    networks:
-      homelab:
-        ipv4_address: 172.20.0.63
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U windmill"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  windmill-server:
-    image: ghcr.io/windmill-labs/windmill:main
-    container_name: windmill-server
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: postgres://windmill:${WINDMILL_DB_PASSWORD:-windmill_secret_2024}@windmill-db/windmill?sslmode=disable
-      MODE: server
-      BASE_URL: ${WINDMILL_BASE_URL:-http://localhost:8000}
+      TZ: ${TZ:-America/New_York}
+      NODE_RED_CREDENTIAL_SECRET: ${NODE_RED_CREDENTIAL_SECRET:-your_credential_secret_here}
+      NODE_RED_ENABLE_PROJECTS: "true"
+      NODE_RED_ENABLE_SAFE_MODE: "false"
     ports:
-      - "8000:8000"
+      - "1880:1880"
     networks:
       homelab:
         ipv4_address: 172.20.0.61
-    depends_on:
-      windmill-db:
-        condition: service_healthy
-
-  windmill-worker:
-    image: ghcr.io/windmill-labs/windmill:main
-    container_name: windmill-worker
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: postgres://windmill:${WINDMILL_DB_PASSWORD:-windmill_secret_2024}@windmill-db/windmill?sslmode=disable
-      MODE: worker
-      WORKER_GROUP: default
-      REDIS_HOST: ai-redis
-      REDIS_PORT: 6379
-      OLLAMA_URL: http://ollama:11434
-      QDRANT_URL: http://qdrant:6333
-      SEARXNG_URL: http://searxng:8080
-    networks:
-      homelab:
-        ipv4_address: 172.20.0.62
-    depends_on:
-      - windmill-server
-      - ai-redis
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - windmill_worker_data:/tmp
+      - node_red_data:/data
+      - ./node-red/settings.js:/data/settings.js:ro
+      - ./node-red/storage.js:/data/storage.js:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1880"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    user: "1000:1000"
 
   # ============= Knowledge & Memory =============
   # Qdrant is already running as a separate service
@@ -116,7 +82,7 @@ services:
       REDIS_PORT: 6379
       QDRANT_URL: http://qdrant:6333
       OLLAMA_URL: http://ollama:11434
-      WINDMILL_URL: http://windmill-server:8000
+      NODE_RED_URL: http://node-red:1880
       SEARXNG_URL: http://searxng:8080
       JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_here}
       PORT: 3000
@@ -127,7 +93,7 @@ services:
         ipv4_address: 172.20.0.70
     depends_on:
       - ai-redis
-      - windmill-server
+      - node-red
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
@@ -197,8 +163,7 @@ services:
       SEARXNG_SECRET_KEY: ${SEARXNG_SECRET_KEY:-ultrasecretkey}
 
 volumes:
-  windmill_db:
-  windmill_worker_data:
+  node_red_data:
   redis_data:
   ollama_data:
   qdrant_data:

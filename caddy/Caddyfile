@@ -43,9 +43,9 @@ api.acebuddy.quest {
     reverse_proxy api-gateway:3000
 }
 
-# Workflow Orchestration (Windmill)
+# Workflow Automation (Node-RED)
 workflows.acebuddy.quest {
-    reverse_proxy windmill-server:8000
+    reverse_proxy node-red:1880
 }
 
 # Task Management (Vikunja - keeping existing)
