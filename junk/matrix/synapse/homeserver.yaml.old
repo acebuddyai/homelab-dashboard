@@ -1,0 +1,58 @@
+# Configuration file for Synapse.
+server_name: "acebuddy.quest"
+public_baseurl: "https://matrix.acebuddy.quest"
+pid_file: /data/homeserver.pid
+
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client, federation]
+        compress: false
+
+database:
+  name: psycopg2
+  args:
+    user: synapse
+    password: mX9kL2pQ8vR5nE7wF3gH9jK6mN4bV1cZ
+    database: synapse
+    host: matrix-postgres
+    port: 5432
+    cp_min: 5
+    cp_max: 10
+
+log_config: "/data/acebuddy.quest.log.config"
+media_store_path: /data/media_store
+report_stats: false
+
+registration_shared_secret: "$(grep 'registration_shared_secret:' /tmp/orig_config 2>/dev/null || echo 'generate-new-secret')"
+macaroon_secret_key: "$(grep 'macaroon_secret_key:' /tmp/orig_config 2>/dev/null || echo 'generate-new-secret')"
+form_secret: "$(grep 'form_secret:' /tmp/orig_config 2>/dev/null || echo 'generate-new-secret')"
+signing_key_path: "/data/acebuddy.quest.signing.key"
+
+trusted_key_servers:
+  - server_name: "matrix.org"
+
+# Modern 2025 registration settings
+registration_requires_token: false
+
+
+experimental_features:
+  msc3861:
+    enabled: true
+    issuer: http://matrix-auth-service:8080/
+    client_id: "0000000000000000000SYNAPSE"
+    client_auth_method: client_secret_basic
+    client_secret: "322cf1d6624bea636c2c9c75c32c9a1c274ad839fb7a8e5c5b50cd0f18736685e54c13b9b79f1b8dd5cf1a0922238e3a"
+    admin_token: "cf6ca249b0e38bc767e5d03bc84af51731acb0430cb390db34e5b2a09249f004c4131ac97e6ece7bba1f348739ed6557"
+    msc4108_delegation_endpoint: "https://auth.acebuddy.quest/_matrix/client/unstable/org.matrix.msc4108/rendezvous"
+
+# Disable password auth (MAS handles this now)
+password_config:
+  enabled: false
+
+# Keep registration disabled (MAS handles this)
+enable_registration: false
+enable_registration_without_verification: true

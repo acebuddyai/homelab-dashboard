@@ -53,9 +53,65 @@ tasks.acebuddy.quest {
     reverse_proxy vikunja:3456
 }
 
-# File Storage (Nextcloud - keeping existing)
+# File Storage (Nextcloud)
 files.acebuddy.quest {
-    reverse_proxy nextcloud:80
+    # Security headers
+    header {
+        # Enable HSTS
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        # Security headers
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "no-referrer-when-downgrade"
+        X-Download-Options "noopen"
+        X-Permitted-Cross-Domain-Policies "none"
+        X-Robots-Tag "none"
+        # Remove server header
+        -Server
+        -X-Powered-By
+    }
+
+    # WebSocket support for Nextcloud Push
+    @websockets {
+        header Connection *Upgrade*
+        header Upgrade websocket
+    }
+    handle @websockets {
+        reverse_proxy nextcloud-push:7867
+    }
+
+    # Collabora Online
+    handle_path /browser/* {
+        reverse_proxy collabora:9980
+    }
+    handle_path /hosting/* {
+        reverse_proxy collabora:9980
+    }
+    handle_path /cool/* {
+        reverse_proxy collabora:9980
+    }
+    handle_path /lool/* {
+        reverse_proxy collabora:9980
+    }
+    handle_path /loleaflet/* {
+        reverse_proxy collabora:9980
+    }
+
+    # Main Nextcloud reverse proxy
+    reverse_proxy nextcloud-web:80 {
+        # Headers for Nextcloud
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+        header_up X-Forwarded-Host {host}
+        # Increase timeouts for large file uploads
+        transport http {
+            read_timeout 600s
+            write_timeout 600s
+        }
+    }
 }
 
 # Status Dashboard (keeping existing)
@@ -81,4 +137,13 @@ mail.acebuddy.quest {
 # Calendar & Contacts (Baikal CalDAV/CardDAV)
 calendar.acebuddy.quest {
     reverse_proxy baikal:80
+}
+
+# Collabora Online Office
+office.acebuddy.quest {
+    reverse_proxy collabora:9980 {
+        transport http {
+            tls_insecure_skip_verify
+        }
+    }
 }

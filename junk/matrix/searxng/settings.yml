@@ -1,0 +1,15 @@
+use_default_settings: true
+server:
+  port: 8080
+  bind_address: "0.0.0.0"
+  secret_key: "replace-this-with-a-secret-key"
+search:
+  safe_search: 0
+  autocomplete: ""
+engines:
+  - name: google
+    disabled: false
+  - name: bing
+    disabled: false
+  - name: duckduckgo
+    disabled: false

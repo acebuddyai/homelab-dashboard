@@ -1,0 +1,51 @@
+# Configuration file for Synapse.
+server_name: "acebuddy.quest"
+public_baseurl: "https://matrix.acebuddy.quest"
+pid_file: /data/homeserver.pid
+
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client, federation]
+        compress: false
+
+database:
+  name: psycopg2
+  args:
+    user: synapse
+    password: e05YUv5UQDuQdXpFDElvfPMq1kbyW7pj 
+    database: synapse
+    host: matrix-postgres
+    port: 5432
+    cp_min: 5
+    cp_max: 10
+
+log_config: "/data/acebuddy.quest.log.config"
+media_store_path: /data/media_store
+report_stats: false
+
+# Secrets from environment variables
+registration_shared_secret: ""
+macaroon_secret_key: ""
+form_secret: ""
+signing_key_path: "/data/acebuddy.quest.signing.key"
+
+trusted_key_servers:
+  - server_name: "matrix.org"
+
+# Standard registration and authentication
+enable_registration: true
+enable_registration_without_verification: true
+registration_requires_token: false
+
+# Standard password authentication
+password_config:
+  enabled: true
+  pepper: "79df1c7e799ff3c1d7b86aa191a9dd44dcff3554341875d477e07f0873bbf70718566f2f56391d79b9504292b4b1c87a"
+
+# Security settings
+use_presence: true
+registration_shared_secret: "ab362494dc9ce5ef63ddbcffe3df3e7b23d480eced5399d825861cdebfc5976ef0cd637033a0c740bb1016ca309ed1c8"
