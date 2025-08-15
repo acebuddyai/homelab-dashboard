@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  radicale:
+    image: tomsquest/docker-radicale:latest
+    container_name: radicale
+    restart: unless-stopped
+    ports:
+      - "5232:5232"  # CalDAV/CardDAV port
+    volumes:
+      - ./data:/data
+      - ./config:/config:ro
+    environment:
+      - RADICALE_STORAGE_FILESYSTEM_FOLDER=/data/collections
+      - RADICALE_AUTH_TYPE=htpasswd
+      - RADICALE_AUTH_HTPASSWD_FILENAME=/config/users
+      - RADICALE_AUTH_HTPASSWD_ENCRYPTION=bcrypt
+      - RADICALE_RIGHTS_TYPE=owner_only
+      - RADICALE_WEB_TYPE=internal
+    networks:
+      - homelab
+    user: "1000:1000"  # Run as non-root user
+
+  # CalDAV/CardDAV web interface
+  infcloud:
+    image: nginx:alpine
+    container_name: infcloud
+    restart: unless-stopped
+    ports:
+      - "8087:80"
+    volumes:
+      - ./infcloud:/usr/share/nginx/html:ro
+      - ./infcloud.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - radicale
+    networks:
+      - homelab
+
+networks:
+  homelab:
+    external: true

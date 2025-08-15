@@ -1,324 +1,370 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Homelab AI - Service Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        }
-        .service-card {
-            transition: all 0.3s ease;
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-        }
-        .service-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-        }
-        .service-card:hover .icon-wrapper {
-            transform: scale(1.1);
-        }
-        .icon-wrapper {
-            transition: transform 0.3s ease;
-        }
-        .status-dot {
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Homelab AI - Service Dashboard</title>
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+        <style>
+            body {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
             }
-            70% {
-                box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+            .glass-effect {
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                border-radius: 20px;
+                box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
             }
-            100% {
-                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            .service-card {
+                transition: all 0.3s ease;
+                background: white;
+                border-radius: 15px;
+                overflow: hidden;
             }
-        }
-        .category-badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: 8px;
-        }
-        .gradient-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-    </style>
-</head>
-<body class="antialiased">
-    <div class="container mx-auto px-4 py-8 max-w-7xl">
-        <!-- Header -->
-        <div class="glass-effect p-8 mb-8 text-center">
-            <div class="flex justify-center items-center mb-4">
-                <div class="relative">
-                    <i class="fas fa-robot text-6xl gradient-text"></i>
-                    <span class="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full status-dot"></span>
-                </div>
-            </div>
-            <h1 class="text-4xl font-bold mb-2 gradient-text">Homelab AI Assistant</h1>
-            <p class="text-gray-600">Your Personal AI-Powered Command Center</p>
-            <div class="mt-4 flex justify-center space-x-4 text-sm">
-                <span class="text-green-600"><i class="fas fa-circle text-green-500 mr-1"></i> All Systems Operational</span>
-                <span class="text-gray-500">|</span>
-                <span class="text-gray-600"><i class="fas fa-server mr-1"></i> acebuddy.quest</span>
-            </div>
-        </div>
-
-        <!-- Main AI Services -->
-        <div class="mb-8">
-            <h2 class="text-white text-2xl font-bold mb-4 flex items-center">
-                <i class="fas fa-star mr-2"></i> Core AI Services
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- AI Assistant -->
-                <a href="https://ai.acebuddy.quest" target="_blank" class="service-card p-6 block">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="icon-wrapper bg-gradient-to-br from-purple-500 to-pink-500 text-white p-4 rounded-lg">
-                            <i class="fas fa-brain text-2xl"></i>
-                        </div>
-                        <span class="category-badge">PRIMARY</span>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">AI Assistant</h3>
-                    <p class="text-gray-600 text-sm mb-3">Main AI interface with chat, tasks, knowledge base, and workflows</p>
-                    <div class="flex items-center text-sm text-indigo-600">
-                        <span>Open Dashboard</span>
-                        <i class="fas fa-arrow-right ml-2"></i>
-                    </div>
-                </a>
-
-                <!-- Chat Interface -->
-                <a href="https://chat.acebuddy.quest" target="_blank" class="service-card p-6 block">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="icon-wrapper bg-gradient-to-br from-blue-500 to-cyan-500 text-white p-4 rounded-lg">
-                            <i class="fas fa-comments text-2xl"></i>
-                        </div>
-                        <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ONLINE</span>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Open WebUI</h3>
-                    <p class="text-gray-600 text-sm mb-3">Direct chat with Llama 3.2 and other AI models</p>
-                    <div class="flex items-center text-sm text-indigo-600">
-                        <span>Start Chatting</span>
-                        <i class="fas fa-arrow-right ml-2"></i>
-                    </div>
-                </a>
-
-                <!-- API Gateway -->
-                <a href="https://api.acebuddy.quest/health" target="_blank" class="service-card p-6 block">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="icon-wrapper bg-gradient-to-br from-green-500 to-teal-500 text-white p-4 rounded-lg">
-                            <i class="fas fa-plug text-2xl"></i>
-                        </div>
-                        <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">HEALTHY</span>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">API Gateway</h3>
-                    <p class="text-gray-600 text-sm mb-3">RESTful API for all AI services and integrations</p>
-                    <div class="flex items-center text-sm text-indigo-600">
-                        <span>Check Status</span>
-                        <i class="fas fa-arrow-right ml-2"></i>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-        <!-- Automation & Productivity -->
-        <div class="mb-8">
-            <h2 class="text-white text-2xl font-bold mb-4 flex items-center">
-                <i class="fas fa-cogs mr-2"></i> Automation & Productivity
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Workflows -->
-                <a href="https://workflows.acebuddy.quest" target="_blank" class="service-card p-6 block">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="icon-wrapper bg-gradient-to-br from-orange-500 to-red-500 text-white p-4 rounded-lg">
-                            <i class="fas fa-project-diagram text-2xl"></i>
-                        </div>
-                        <span class="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">NEW</span>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Windmill</h3>
-                    <p class="text-gray-600 text-sm mb-3">Workflow automation and orchestration platform</p>
-                    <div class="flex items-center text-sm text-indigo-600">
-                        <span>Manage Workflows</span>
-                        <i class="fas fa-arrow-right ml-2"></i>
-                    </div>
-                </a>
-
-                <!-- Tasks -->
-                <a href="https://tasks.acebuddy.quest" target="_blank" class="service-card p-6 block">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="icon-wrapper bg-gradient-to-br from-indigo-500 to-purple-500 text-white p-4 rounded-lg">
-                            <i class="fas fa-tasks text-2xl"></i>
-                        </div>
-                        <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ONLINE</span>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Vikunja</h3>
-                    <p class="text-gray-600 text-sm mb-3">Task management and to-do lists with AI integration</p>
-                    <div class="flex items-center text-sm text-indigo-600">
-                        <span>Manage Tasks</span>
-                        <i class="fas fa-arrow-right ml-2"></i>
-                    </div>
-                </a>
-
-                <!-- Files -->
-                <a href="https://files.acebuddy.quest" target="_blank" class="service-card p-6 block">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="icon-wrapper bg-gradient-to-br from-yellow-500 to-orange-500 text-white p-4 rounded-lg">
-                            <i class="fas fa-folder-open text-2xl"></i>
-                        </div>
-                        <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ONLINE</span>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Nextcloud</h3>
-                    <p class="text-gray-600 text-sm mb-3">File storage, sync, and collaboration platform</p>
-                    <div class="flex items-center text-sm text-indigo-600">
-                        <span>Browse Files</span>
-                        <i class="fas fa-arrow-right ml-2"></i>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-        <!-- Information & Monitoring -->
-        <div class="mb-8">
-            <h2 class="text-white text-2xl font-bold mb-4 flex items-center">
-                <i class="fas fa-info-circle mr-2"></i> Information & Monitoring
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Search -->
-                <a href="https://search.acebuddy.quest" target="_blank" class="service-card p-6 block">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="icon-wrapper bg-gradient-to-br from-teal-500 to-cyan-500 text-white p-4 rounded-lg">
-                            <i class="fas fa-search text-2xl"></i>
-                        </div>
-                        <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ONLINE</span>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">SearXNG</h3>
-                    <p class="text-gray-600 text-sm mb-3">Privacy-respecting metasearch engine</p>
-                    <div class="flex items-center text-sm text-indigo-600">
-                        <span>Search Web</span>
-                        <i class="fas fa-arrow-right ml-2"></i>
-                    </div>
-                </a>
-
-                <!-- Status -->
-                <a href="https://status.acebuddy.quest" target="_blank" class="service-card p-6 block">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="icon-wrapper bg-gradient-to-br from-green-500 to-emerald-500 text-white p-4 rounded-lg">
-                            <i class="fas fa-heartbeat text-2xl"></i>
-                        </div>
-                        <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ONLINE</span>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Status Page</h3>
-                    <p class="text-gray-600 text-sm mb-3">System health monitoring and uptime tracking</p>
-                    <div class="flex items-center text-sm text-indigo-600">
-                        <span>View Status</span>
-                        <i class="fas fa-arrow-right ml-2"></i>
-                    </div>
-                </a>
-
-                <!-- Vector DB -->
-                <a href="https://vectors.acebuddy.quest" target="_blank" class="service-card p-6 block">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="icon-wrapper bg-gradient-to-br from-pink-500 to-rose-500 text-white p-4 rounded-lg">
-                            <i class="fas fa-database text-2xl"></i>
-                        </div>
-                        <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ONLINE</span>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Qdrant</h3>
-                    <p class="text-gray-600 text-sm mb-3">Vector database for AI memory and RAG</p>
-                    <div class="flex items-center text-sm text-indigo-600">
-                        <span>View Dashboard</span>
-                        <i class="fas fa-arrow-right ml-2"></i>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="glass-effect p-6 mb-8">
-            <h3 class="text-xl font-bold mb-4 gradient-text">Quick Actions</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <a href="https://ai.acebuddy.quest" class="bg-white hover:bg-gray-50 p-4 rounded-lg text-center transition">
-                    <i class="fas fa-comment-dots text-2xl text-indigo-600 mb-2"></i>
-                    <p class="text-sm font-medium">Start AI Chat</p>
-                </a>
-                <a href="https://workflows.acebuddy.quest" class="bg-white hover:bg-gray-50 p-4 rounded-lg text-center transition">
-                    <i class="fas fa-plus-circle text-2xl text-green-600 mb-2"></i>
-                    <p class="text-sm font-medium">Create Workflow</p>
-                </a>
-                <a href="https://tasks.acebuddy.quest" class="bg-white hover:bg-gray-50 p-4 rounded-lg text-center transition">
-                    <i class="fas fa-check-square text-2xl text-blue-600 mb-2"></i>
-                    <p class="text-sm font-medium">Add Task</p>
-                </a>
-                <a href="https://search.acebuddy.quest" class="bg-white hover:bg-gray-50 p-4 rounded-lg text-center transition">
-                    <i class="fas fa-globe text-2xl text-purple-600 mb-2"></i>
-                    <p class="text-sm font-medium">Web Search</p>
-                </a>
-            </div>
-        </div>
-
-        <!-- System Info -->
-        <div class="glass-effect p-6 text-center">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div>
-                    <p class="text-gray-500 mb-1">AI Model</p>
-                    <p class="font-semibold">Llama 3.2 (Local)</p>
-                </div>
-                <div>
-                    <p class="text-gray-500 mb-1">Architecture</p>
-                    <p class="font-semibold">Docker Compose</p>
-                </div>
-                <div>
-                    <p class="text-gray-500 mb-1">License</p>
-                    <p class="font-semibold">100% Open Source</p>
-                </div>
-            </div>
-            <div class="mt-4 pt-4 border-t border-gray-200">
-                <p class="text-gray-600 text-xs">
-                    Powered by Ollama • Windmill • Qdrant • SearXNG • Node.js • Nginx
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Optional: Add live status checking
-        async function checkServiceStatus() {
-            const services = [
-                { url: 'https://api.acebuddy.quest/health', name: 'API' },
-                { url: 'https://ai.acebuddy.quest/health', name: 'UI' }
-            ];
-
-            for (const service of services) {
-                try {
-                    const response = await fetch(service.url, { mode: 'no-cors' });
-                    console.log(`${service.name} is reachable`);
-                } catch (error) {
-                    console.log(`${service.name} check failed:`, error);
+            .service-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+            }
+            .service-card:hover .icon-wrapper {
+                transform: scale(1.1);
+            }
+            .icon-wrapper {
+                transition: transform 0.3s ease;
+            }
+            .status-dot {
+                animation: pulse 2s infinite;
+            }
+            @keyframes pulse {
+                0% {
+                    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+                }
+                70% {
+                    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+                }
+                100% {
+                    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
                 }
             }
-        }
+            .category-badge {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                display: inline-block;
+                margin-bottom: 8px;
+            }
+            .gradient-text {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+        </style>
+    </head>
+    <body class="antialiased">
+        <div class="container mx-auto px-4 py-8 max-w-7xl">
+            <!-- Header -->
+            <div class="glass-effect p-8 mb-8 text-center">
+                <div class="flex justify-center items-center mb-4">
+                    <div class="relative">
+                        <i class="fas fa-robot text-6xl gradient-text"></i>
+                        <span class="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full status-dot"></span>
+                    </div>
+                </div>
+                <h1 class="text-4xl font-bold mb-2 gradient-text">Homelab AI Assistant</h1>
+                <p class="text-gray-600">Your Personal AI-Powered Command Center</p>
+                <div class="mt-4 flex justify-center space-x-4 text-sm">
+                    <span class="text-green-600"><i class="fas fa-circle text-green-500 mr-1"></i> All Systems Operational</span>
+                    <span class="text-gray-500">|</span>
+                    <span class="text-gray-600"><i class="fas fa-server mr-1"></i> acebuddy.quest</span>
+                </div>
+            </div>
 
-        // Check status on load
-        checkServiceStatus();
-    </script>
-</body>
+            <!-- Main AI Services -->
+            <div class="mb-8">
+                <h2 class="text-white text-2xl font-bold mb-4 flex items-center"><i class="fas fa-star mr-2"></i> Core AI Services</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- AI Assistant -->
+                    <a href="http://localhost:8080" target="_blank" class="service-card p-6 block">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="icon-wrapper bg-gradient-to-br from-purple-500 to-pink-500 text-white p-4 rounded-lg">
+                                <i class="fas fa-brain text-2xl"></i>
+                            </div>
+                            <span class="category-badge">PRIMARY</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">AI Dashboard</h3>
+                        <p class="text-gray-600 text-sm mb-3">Main AI interface with chat, tasks, knowledge base, and workflows</p>
+                        <div class="flex items-center text-sm text-indigo-600">
+                            <span>Open Dashboard</span>
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </div>
+                    </a>
+
+                    <!-- Chat Interface -->
+                    <a href="http://localhost:11434" target="_blank" class="service-card p-6 block">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="icon-wrapper bg-gradient-to-br from-blue-500 to-cyan-500 text-white p-4 rounded-lg">
+                                <i class="fas fa-comments text-2xl"></i>
+                            </div>
+                            <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ONLINE</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Ollama AI</h3>
+                        <p class="text-gray-600 text-sm mb-3">Direct chat with Llama 3.2 and other AI models</p>
+                        <div class="flex items-center text-sm text-indigo-600">
+                            <span>API Endpoint</span>
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </div>
+                    </a>
+
+                    <!-- API Gateway -->
+                    <a href="http://localhost:3000/health" target="_blank" class="service-card p-6 block">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="icon-wrapper bg-gradient-to-br from-green-500 to-teal-500 text-white p-4 rounded-lg">
+                                <i class="fas fa-plug text-2xl"></i>
+                            </div>
+                            <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">HEALTHY</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">API Gateway</h3>
+                        <p class="text-gray-600 text-sm mb-3">RESTful API for all AI services and integrations</p>
+                        <div class="flex items-center text-sm text-indigo-600">
+                            <span>Check Status</span>
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Communication & Collaboration -->
+            <div class="mb-8">
+                <h2 class="text-white text-2xl font-bold mb-4 flex items-center"><i class="fas fa-users mr-2"></i> Communication & Collaboration</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Email -->
+                    <a href="http://localhost:8086" target="_blank" class="service-card p-6 block">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="icon-wrapper bg-gradient-to-br from-red-500 to-pink-500 text-white p-4 rounded-lg">
+                                <i class="fas fa-envelope text-2xl"></i>
+                            </div>
+                            <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ACTIVE</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Webmail</h3>
+                        <p class="text-gray-600 text-sm mb-3">Local email server with Roundcube webmail interface</p>
+                        <div class="flex items-center text-sm text-indigo-600">
+                            <span>Open Webmail</span>
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </div>
+                    </a>
+
+                    <!-- Calendar -->
+                    <a href="http://localhost:5232" target="_blank" class="service-card p-6 block">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="icon-wrapper bg-gradient-to-br from-yellow-500 to-orange-500 text-white p-4 rounded-lg">
+                                <i class="fas fa-calendar-alt text-2xl"></i>
+                            </div>
+                            <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ACTIVE</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Calendar</h3>
+                        <p class="text-gray-600 text-sm mb-3">CalDAV & CardDAV server for calendars and contacts</p>
+                        <div class="flex items-center text-sm text-indigo-600">
+                            <span>Manage Calendar</span>
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </div>
+                    </a>
+
+                    <!-- Nextcloud -->
+                    <a href="http://localhost:8082" target="_blank" class="service-card p-6 block">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="icon-wrapper bg-gradient-to-br from-blue-600 to-blue-400 text-white p-4 rounded-lg">
+                                <i class="fas fa-cloud text-2xl"></i>
+                            </div>
+                            <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ACTIVE</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Nextcloud</h3>
+                        <p class="text-gray-600 text-sm mb-3">Personal cloud storage with file sync and sharing</p>
+                        <div class="flex items-center text-sm text-indigo-600">
+                            <span>Open Drive</span>
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Automation & Productivity -->
+            <div class="mb-8">
+                <h2 class="text-white text-2xl font-bold mb-4 flex items-center"><i class="fas fa-cogs mr-2"></i> Automation & Productivity</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Workflows -->
+                    <a href="http://localhost:8080" target="_blank" class="service-card p-6 block">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="icon-wrapper bg-gradient-to-br from-orange-500 to-red-500 text-white p-4 rounded-lg">
+                                <i class="fas fa-project-diagram text-2xl"></i>
+                            </div>
+                            <span class="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">NEW</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Windmill</h3>
+                        <p class="text-gray-600 text-sm mb-3">Workflow automation and orchestration platform</p>
+                        <div class="flex items-center text-sm text-indigo-600">
+                            <span>Manage Workflows</span>
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </div>
+                    </a>
+
+                    <!-- Tasks -->
+                    <a href="https://tasks.acebuddy.quest" target="_blank" class="service-card p-6 block">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="icon-wrapper bg-gradient-to-br from-indigo-500 to-purple-500 text-white p-4 rounded-lg">
+                                <i class="fas fa-tasks text-2xl"></i>
+                            </div>
+                            <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ONLINE</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Vikunja</h3>
+                        <p class="text-gray-600 text-sm mb-3">Task management and to-do lists with AI integration</p>
+                        <div class="flex items-center text-sm text-indigo-600">
+                            <span>Manage Tasks</span>
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </div>
+                    </a>
+
+                    <!-- Files -->
+                    <a href="https://files.acebuddy.quest" target="_blank" class="service-card p-6 block">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="icon-wrapper bg-gradient-to-br from-yellow-500 to-orange-500 text-white p-4 rounded-lg">
+                                <i class="fas fa-folder-open text-2xl"></i>
+                            </div>
+                            <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ONLINE</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Nextcloud</h3>
+                        <p class="text-gray-600 text-sm mb-3">File storage, sync, and collaboration platform</p>
+                        <div class="flex items-center text-sm text-indigo-600">
+                            <span>Browse Files</span>
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Information & Monitoring -->
+            <div class="mb-8">
+                <h2 class="text-white text-2xl font-bold mb-4 flex items-center"><i class="fas fa-info-circle mr-2"></i> Information & Monitoring</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Search -->
+                    <a href="https://search.acebuddy.quest" target="_blank" class="service-card p-6 block">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="icon-wrapper bg-gradient-to-br from-teal-500 to-cyan-500 text-white p-4 rounded-lg">
+                                <i class="fas fa-search text-2xl"></i>
+                            </div>
+                            <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ONLINE</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">SearXNG</h3>
+                        <p class="text-gray-600 text-sm mb-3">Privacy-respecting metasearch engine</p>
+                        <div class="flex items-center text-sm text-indigo-600">
+                            <span>Search Web</span>
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </div>
+                    </a>
+
+                    <!-- Status -->
+                    <a href="https://status.acebuddy.quest" target="_blank" class="service-card p-6 block">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="icon-wrapper bg-gradient-to-br from-green-500 to-emerald-500 text-white p-4 rounded-lg">
+                                <i class="fas fa-heartbeat text-2xl"></i>
+                            </div>
+                            <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ONLINE</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Status Page</h3>
+                        <p class="text-gray-600 text-sm mb-3">System health monitoring and uptime tracking</p>
+                        <div class="flex items-center text-sm text-indigo-600">
+                            <span>View Status</span>
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </div>
+                    </a>
+
+                    <!-- Vector DB -->
+                    <a href="https://vectors.acebuddy.quest" target="_blank" class="service-card p-6 block">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="icon-wrapper bg-gradient-to-br from-pink-500 to-rose-500 text-white p-4 rounded-lg">
+                                <i class="fas fa-database text-2xl"></i>
+                            </div>
+                            <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">ONLINE</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Qdrant</h3>
+                        <p class="text-gray-600 text-sm mb-3">Vector database for AI memory and RAG</p>
+                        <div class="flex items-center text-sm text-indigo-600">
+                            <span>View Dashboard</span>
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="glass-effect p-6 mb-8">
+                <h3 class="text-xl font-bold mb-4 gradient-text">Quick Actions</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <a href="https://ai.acebuddy.quest" class="bg-white hover:bg-gray-50 p-4 rounded-lg text-center transition">
+                        <i class="fas fa-comment-dots text-2xl text-indigo-600 mb-2"></i>
+                        <p class="text-sm font-medium">Start AI Chat</p>
+                    </a>
+                    <a href="https://workflows.acebuddy.quest" class="bg-white hover:bg-gray-50 p-4 rounded-lg text-center transition">
+                        <i class="fas fa-plus-circle text-2xl text-green-600 mb-2"></i>
+                        <p class="text-sm font-medium">Create Workflow</p>
+                    </a>
+                    <a href="https://tasks.acebuddy.quest" class="bg-white hover:bg-gray-50 p-4 rounded-lg text-center transition">
+                        <i class="fas fa-check-square text-2xl text-blue-600 mb-2"></i>
+                        <p class="text-sm font-medium">Add Task</p>
+                    </a>
+                    <a href="https://search.acebuddy.quest" class="bg-white hover:bg-gray-50 p-4 rounded-lg text-center transition">
+                        <i class="fas fa-globe text-2xl text-purple-600 mb-2"></i>
+                        <p class="text-sm font-medium">Web Search</p>
+                    </a>
+                </div>
+            </div>
+
+            <!-- System Info -->
+            <div class="glass-effect p-6 text-center">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                        <p class="text-gray-500 mb-1">AI Model</p>
+                        <p class="font-semibold">Llama 3.2 (Local)</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 mb-1">Architecture</p>
+                        <p class="font-semibold">Docker Compose</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 mb-1">License</p>
+                        <p class="font-semibold">100% Open Source</p>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <p class="text-gray-600 text-xs">Powered by Ollama • Windmill • Qdrant • SearXNG • Node.js • Nginx</p>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Optional: Add live status checking
+            async function checkServiceStatus() {
+                const services = [
+                    { url: "https://api.acebuddy.quest/health", name: "API" },
+                    { url: "https://ai.acebuddy.quest/health", name: "UI" },
+                ];
+
+                for (const service of services) {
+                    try {
+                        const response = await fetch(service.url, { mode: "no-cors" });
+                        console.log(`${service.name} is reachable`);
+                    } catch (error) {
+                        console.log(`${service.name} check failed:`, error);
+                    }
+                }
+            }
+
+            // Check status on load
+            checkServiceStatus();
+        </script>
+    </body>
 </html>

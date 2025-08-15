@@ -1,0 +1,77 @@
+# Radicale Configuration
+# CalDAV and CardDAV Server
+
+[server]
+# Bind all interfaces on port 5232
+hosts = 0.0.0.0:5232
+# Max connections
+max_connections = 20
+# Max content length (100MB)
+max_content_length = 100000000
+# Timeout
+timeout = 30
+
+[encoding]
+# Encoding for responses
+request = utf-8
+stock = utf-8
+
+[auth]
+# Authentication method
+# htpasswd = Use an Apache htpasswd file
+# none = No authentication
+type = htpasswd
+
+# Htpasswd file location
+htpasswd_filename = /config/users
+
+# Htpasswd encryption method
+# plain, bcrypt, md5
+htpasswd_encryption = bcrypt
+
+# Delay after failed authentication
+delay = 1
+
+[rights]
+# Rights backend
+# owner_only = A user can only read/write their own collections
+# owner_write = A user can read all collections, but only write their own
+# from_file = Load rights from file
+type = owner_only
+
+[storage]
+# Storage backend
+type = multifilesystem
+
+# Folder for storing local collections
+filesystem_folder = /data/collections
+
+# Delete sync-token that are older than the specified time
+max_sync_token_age = 2592000
+
+# Command to run after changes to storage
+hook =
+
+[web]
+# Web interface backend
+# internal = Use Radicale's internal web interface
+# none = No web interface
+type = internal
+
+[logging]
+# Logging level
+# debug, info, warning, error, critical
+level = info
+
+# Logging to stdout
+console = True
+
+# Mask passwords in logs
+mask_passwords = True
+
+[headers]
+# Additional HTTP headers
+Access-Control-Allow-Origin = *
+Access-Control-Allow-Methods = GET, POST, PUT, DELETE, PROPFIND, PROPPATCH, REPORT
+Access-Control-Allow-Headers = User-Agent, Authorization, Content-type, Depth, If-match, If-None-Match, Lock-Token, Timeout, Destination, Overwrite, Prefer, X-client, X-Requested-With
+Access-Control-Expose-Headers = Etag, Preference-Applied
